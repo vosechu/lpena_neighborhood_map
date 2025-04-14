@@ -27,7 +27,7 @@ Download the neighborhood data from pcpao
 ```
 curl -G 'https://egis.pinellas.gov/pcpagis/rest/services/Pcpaoorg_b/PropertyPopup/MapServer/0/query' \
   --data-urlencode 'f=json' \
-  --data-urlencode 'geometry={"xmin":-9209254.680251373,"ymin":3220258.712726869,"xmax":-9207550.000000000,"ymax":3220854.000000000,"spatialReference":{"wkid":102100}}' \
+  --data-urlencode 'geometry={"xmin":-9209254.680251373,"ymin":3220258.712726869,"xmax":-9207500.000000000,"ymax":3220860.000000000,"spatialReference":{"wkid":102100}}' \
   --data-urlencode 'geometryType=esriGeometryEnvelope' \
   --data-urlencode 'spatialRel=esriSpatialRelIntersects' \
   --data-urlencode 'outFields=*' \
@@ -52,7 +52,7 @@ jq 'del(.features[].attributes.HEADER_HTML)' bbox_response.json > cleaned.json
 
 Extract only the features array
 ```
-jq '.features' cleaned.json > houses.json
+jq '{features: .features}' cleaned.json > houses.json
 ```
 
 Read only the addresses and owners
