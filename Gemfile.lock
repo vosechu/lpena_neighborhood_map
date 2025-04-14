@@ -115,6 +115,10 @@ GEM
       activesupport (>= 6.1)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
+    importmap-rails (2.1.0)
+      actionpack (>= 6.0.0)
+      activesupport (>= 6.0.0)
+      railties (>= 6.0.0)
     io-console (0.8.0)
     irb (1.15.2)
       pp (>= 0.6.0)
@@ -300,6 +304,8 @@ GEM
       net-sftp (>= 2.1.2)
       net-ssh (>= 2.8.0)
       ostruct
+    stimulus-rails (1.3.4)
+      railties (>= 6.0.0)
     stringio (3.1.6)
     tailwindcss-rails (4.2.2)
       railties (>= 7.0.0)
@@ -343,6 +349,7 @@ DEPENDENCIES
   brakeman
   capybara
   debug
+  importmap-rails (~> 2.1)
   jbuilder
   kamal
   pg (~> 1.1)
@@ -354,6 +361,7 @@ DEPENDENCIES
   solid_cable
   solid_cache
   solid_queue
+  stimulus-rails (~> 1.3)
   tailwindcss-rails
   thruster
   tzinfo-data
