@@ -18,14 +18,13 @@ RSpec.describe Connections::PcpaGisConnection do
 
   describe "#fetch_properties" do
     context "when the request is successful" do
-      let(:response) { HTTParty.get("http://example.com") }
+      let(:response) { instance_double(HTTParty::Response) }
 
       before do
         allow(HTTParty).to receive(:get).and_return(response)
         allow(response).to receive(:success?).and_return(true)
         allow(response).to receive(:body).and_return(mock_response.to_json)
-        allow(response).to receive(:code).and_call_original
-        allow(response).to receive(:message).and_call_original
+        allow(response).to receive(:code).and_return(200)
       end
 
       it "makes a request to the correct URL with correct parameters" do
@@ -42,22 +41,24 @@ RSpec.describe Connections::PcpaGisConnection do
 
         expect(result["features"].size).to eq(1)
         expect(result["features"].first["attributes"]["HEADER_HTML"]).to be_nil
+        expect(result["features"].first["attributes"]["PROPERTY_ID"]).to eq("123")
       end
     end
 
     context "when the request fails" do
-      let(:response) { HTTParty.get("http://example.com") }
+      let(:response) { instance_double(HTTParty::Response) }
 
       before do
         allow(HTTParty).to receive(:get).and_return(response)
         allow(response).to receive(:success?).and_return(false)
         allow(response).to receive(:code).and_return(500)
-        allow(response).to receive(:message).and_return("Internal Server Error")
-        allow(response).to receive(:body).and_call_original
       end
 
       it "raises an error" do
-        expect { connection.fetch_properties }.to raise_error(RuntimeError)
+        expect { connection.fetch_properties }.to raise_error(
+          RuntimeError,
+          "Failed to download property data: 500"
+        )
       end
     end
   end
