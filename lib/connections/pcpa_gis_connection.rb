@@ -18,7 +18,7 @@ module Connections
         data = JSON.parse(response.body)
         clean_data(data)
       else
-        raise "Failed to download property data: #{response.code} - #{response.message}"
+        raise "Failed to download property data: #{response.code}"
       end
     end
 
