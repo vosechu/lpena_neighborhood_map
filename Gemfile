@@ -12,6 +12,8 @@ gem "puma", ">= 5.0"
 gem "tailwindcss-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
+# HTTP client for making API requests
+gem "httparty"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
@@ -53,7 +55,10 @@ group :development do
 end
 
 group :test do
-  # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
+  # Testing framework
+  gem "rspec-rails"
+  gem "rspec-mocks"
+  # System testing
   gem "capybara"
   gem "selenium-webdriver"
 end
