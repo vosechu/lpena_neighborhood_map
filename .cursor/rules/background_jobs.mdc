@@ -1,0 +1,25 @@
+---
+description: background jobs sidekiq
+globs:
+alwaysApply: false
+---
+# Background Jobs Guide
+
+## Job Structure
+The application uses Sidekiq for background job processing. All jobs should:
+- Be placed in [app/jobs/](mdc:app/jobs)
+- Inherit from `ApplicationJob`
+- Include clear documentation of their purpose
+- Have corresponding tests in [spec/jobs/](mdc:spec/jobs)
+
+## Key Files
+- [app/jobs/download_property_data_job.rb](mdc:app/jobs/download_property_data_job.rb) - Downloads property data from PCPA GIS
+- [config/sidekiq.yml](mdc:config/sidekiq.yml) - Sidekiq configuration
+- [config/sidekiq_schedule.yml](mdc:config/sidekiq_schedule.yml) - Job schedule configuration
+
+## Best Practices
+1. Jobs should be idempotent
+2. Use retries appropriately for network operations
+3. Log meaningful progress for long-running jobs
+4. Use scheduled jobs for recurring tasks
+5. Keep jobs focused and single-purpose

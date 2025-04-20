@@ -1,0 +1,26 @@
+---
+description: external connections services
+globs:
+alwaysApply: false
+---
+# External Services Guide
+
+## Service Connections
+All external service connections should:
+- Be placed in [lib/connections/](mdc:lib/connections)
+- Have corresponding tests in [spec/connections/](mdc:spec/connections)
+- Include proper error handling
+- Use environment variables for configuration
+
+## Key Services
+- PCPA GIS Service: [lib/connections/pcpa_gis_connection.rb](mdc:lib/connections/pcpa_gis_connection.rb)
+  - Provides property data
+  - Used by background jobs for nightly updates
+
+## Best Practices
+1. Use connection classes to encapsulate external service logic
+2. Include retry logic for network operations
+3. Log all significant operations
+4. Use WebMock in tests to prevent real network calls
+5. Document API endpoints and expected responses
+6. Handle rate limiting appropriately

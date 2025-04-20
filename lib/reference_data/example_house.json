@@ -1,0 +1,58 @@
+{
+  "features": [
+    {
+      "attributes": {
+        "ACREAGE": 0.2927,
+        "ADDRESS_ZIP_CITY": "6573 1st Ave N St Petersburg, Fl 33710",
+        "CITY": null,
+        "CURRENT_TAX_DISTRICT_DG": "SP",
+        "DG_PLAT_BOOK_PAGE": "7/14",
+        "DISPLAY_STRAP": "20-31-16-48204-003-0140",
+        "INTERNAL_STRAP": "163120482040030140",
+        "LAND_AREA": "0.293 acres  |  12,750 sf",
+        "LATEST_SALE_DSP": "07/24 |          $100",
+        "LATITUDE": 27.772074174,
+        "LONGITUDE": -82.728144652,
+        "LIVING_AREA": "       756 sf |      1,275 sf",
+        "LIVING_AREA_LABEL": "Living SF",
+        "LOAD_DATE": 1744629480000,
+        "OWNER1": "VIZARO, DONNA MARIE TRUST",
+        "OWNER2": "VIZARO, DONNA MARIE TRE",
+        "PARCEL_TYPE": "Residential",
+        "PCPA_UID": 301196,
+        "PLAT_BOOK": "7",
+        "PLAT_PAGE": "14",
+        "PROPERTY_USE": "0110 Single Family Home",
+        "PROPERTY_USE_CODE": "0110",
+        "ROLL_YEAR": "2024",
+        "SITE_ADDR": "6573 1st Ave N",
+        "SITE_CITY": "St Petersburg,",
+        "SITE_CITYZIP": "St Petersburg, Fl 33710",
+        "SUBDIVISION_ID": "48204",
+        "SUBDIVISION_NAME": "Lake Pasadena Development",
+        "TAX_DIST_DSCR": "St Petersburg",
+        "TOTAL_ASD_VALUE": 72103.0,
+        "TOTAL_JST_VALUE": 294203.0,
+        "TOTAL_LIVING_SQFT": 756.0,
+        "TOTAL_GROSS_SQFT": 1275.0,
+        "TOTAL_LIVING_UNITS": 1.0,
+        "TOTAL_TAXABLE_VALUE": 25000.0,
+        "VALUE_YEAR": 2024.0,
+        "YEAR_BUILT": 1951.0,
+        "STR_NAME": "1ST",
+        "STR_NUM": 6573
+      },
+      "geometry": {
+        "rings": [
+          [
+            [-9209240.7571388613, 3220294.4717873628],
+            [-9209240.5707909688, 3220242.5645591398],
+            [-9209269.8302294277, 3220242.4562229472],
+            [-9209270.0166863501, 3220294.3632209231],
+            [-9209240.7571388613, 3220294.4717873628]
+          ]
+        ]
+      }
+    }
+  ]
+}

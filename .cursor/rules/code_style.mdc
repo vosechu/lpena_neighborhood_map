@@ -1,0 +1,33 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Code Style Guide
+
+## Ruby Style
+The project follows standard Ruby style conventions as defined in [.rubocop.yml](mdc:.rubocop.yml):
+- Use single quotes for strings unless interpolation is needed
+- Use 2 spaces for indentation
+- Keep lines under 120 characters
+- Use snake_case for methods and variables
+- Use CamelCase for classes and modules
+
+## Testing Style
+- Tests follow RSpec best practices
+- One expectation per test when possible
+- Use descriptive context and it blocks
+- Follow the pattern in [spec/jobs/download_property_data_job_spec.rb](mdc:spec/jobs/download_property_data_job_spec.rb)
+
+## Automation
+- Guard automatically runs:
+  - RSpec tests on file changes
+  - RuboCop style checks
+  - Other configured tasks
+- See [Guardfile](mdc:Guardfile) for automation configuration
+
+## Process
+1. Write tests first (TDD)
+2. Run Guard while developing
+3. Fix all RuboCop warnings before committing
+4. Keep commits focused and well-documented
