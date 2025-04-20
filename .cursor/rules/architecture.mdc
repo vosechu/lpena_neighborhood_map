@@ -1,0 +1,30 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Architecture
+
+This is a Rails 8 application with a focus on clean architecture and maintainable code.
+
+## Backend Architecture
+- Standard Rails 8 backend with minimal JS provided by Stimulus
+- Frontend mapping functionality provided by leaflet.js
+- Background worker using Sidekiq and Sidekiq scheduler for nightly data downloads
+
+## Code Organization
+- External service connections are stored in `lib/connections/`
+- Business logic is moved out of controllers/jobs into service objects and connection classes
+- Models handle data persistence and validation
+- Jobs coordinate background tasks
+
+## Testing
+- Tests use RSpec following Sandi Metz's testing principles
+- Connections are tested with RSpec mocks, using `and_call_original` where appropriate
+- WebMock is configured globally to prevent accidental network calls
+- Test files mirror the structure of the code they test
+
+## Key Files
+- [lib/connections/pcpa_gis_connection.rb](mdc:lib/connections/pcpa_gis_connection.rb) - Handles communication with PCPA GIS service
+- [spec/connections/pcpa_gis_connection_spec.rb](mdc:spec/connections/pcpa_gis_connection_spec.rb) - Tests for GIS connection
+- [.rubocop.yml](mdc:.rubocop.yml) - RuboCop configuration for code style

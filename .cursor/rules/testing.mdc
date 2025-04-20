@@ -1,0 +1,44 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Testing Guidelines
+
+## RSpec Best Practices
+- Follow Sandi Metz's testing principles
+- Test objects in isolation
+- Mock collaborators appropriately
+- Test public interfaces
+
+## Mocking Strategy
+- Use RSpec mocks with `and_call_original` for partial mocking
+- Only mock the methods you need to control
+- Let other methods behave normally
+- WebMock is configured globally to prevent accidental network calls
+
+## Example Test Structure
+```ruby
+RSpec.describe MyClass do
+  let(:my_object) { described_class.new }
+
+  describe '#my_method' do
+    context 'when successful' do
+      let(:collaborator) { instance_double(Collaborator) }
+
+      before do
+        allow(collaborator).to receive(:some_method).and_return(result)
+        allow(collaborator).to receive(:other_method).and_call_original
+      end
+
+      it 'does something' do
+        # test code
+      end
+    end
+  end
+end
+```
+
+## Key Test Files
+- [spec/connections/pcpa_gis_connection_spec.rb](mdc:spec/connections/pcpa_gis_connection_spec.rb) - Example of connection testing
+- [spec/rails_helper.rb](mdc:spec/rails_helper.rb) - Global RSpec configuration
