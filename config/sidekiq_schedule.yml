@@ -1,0 +1,4 @@
+download_properties:
+  cron: '0 0 * * *'  # Run at midnight every day
+  class: DownloadPropertyDataJob
+  queue: default
