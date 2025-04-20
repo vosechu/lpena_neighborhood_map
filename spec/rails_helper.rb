@@ -74,4 +74,7 @@ RSpec.configure do |config|
     # Deny all web requests by default
     WebMock.disable_net_connect!(allow_localhost: true)
   end
+
+  # Configure FactoryBot
+  config.include FactoryBot::Syntax::Methods
 end
