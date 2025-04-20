@@ -68,6 +68,8 @@ group :test do
   # Testing framework
   gem 'rspec-rails'
   gem 'rspec-mocks'
+  # Test data generation
+  gem 'factory_bot_rails'
   # System testing
   gem 'capybara'
   gem 'selenium-webdriver'
