@@ -1,0 +1,99 @@
+<context>
+# Overview
+This project is a neighborhood mapping and resident management platform designed for local communities. It enables users to visualize houses on an interactive map, manage resident information with privacy controls, and facilitate community engagement. The platform is valuable for neighborhood associations, residents, and local organizers who need a secure, user-friendly way to keep track of households, residents, and shared information.
+
+# Core Features
+- **Interactive Map (Leaflet.js):**
+  - Visualizes all houses in the neighborhood with boundaries and geo-coordinates.
+  - Allows users to click on houses to view details and resident information (subject to privacy settings).
+  - Supports searching and filtering by address, resident name, or attributes.
+- **Resident Management:**
+  - Add, edit, and remove residents for each house.
+  - Privacy controls for each resident (share email, phone, birthdate, display name, public visibility).
+  - Track resident history (first seen, last seen, welcomed date).
+- **User Accounts:**
+  - Users can register, log in, and claim their resident profile.
+  - Admins can manage all data; regular users can manage their own household/resident info.
+- **Background Data Sync (Sidekiq):**
+  - Nightly jobs to import or update house and resident data from external sources (e.g., county GIS).
+  - Handles data deduplication and updates.
+- **Audit & History:**
+  - Track changes to resident and house data for accountability.
+- **Responsive UI:**
+  - Mobile and desktop friendly, minimal JS (Stimulus for interactivity).
+
+# User Experience
+- **Personas:**
+  - Neighborhood admin/organizer
+  - Resident/homeowner
+  - Newcomer/guest
+- **Key Flows:**
+  - Admin logs in, views map, updates house/resident info, runs data import.
+  - Resident claims their profile, updates privacy settings, and connects with neighbors.
+  - Newcomer browses public map, requests to join or claim a house.
+- **UI/UX Considerations:**
+  - Simple, intuitive map interface
+  - Clear privacy indicators
+  - Easy onboarding for new users
+  - Accessibility and mobile support
+</context>
+<PRD>
+# Technical Architecture
+- **Backend:** Rails 8, clean architecture (service objects, connection classes, models for persistence/validation)
+- **Frontend:** Leaflet.js for mapping, Stimulus for minimal JS interactivity
+- **Background Jobs:** Sidekiq for scheduled data imports
+- **Data Models:**
+  - `House`: address, geo-coordinates, boundary geometry, last import timestamp
+  - `Resident`: links to house/user, official/secondary names, contact info, privacy flags, timestamps
+  - `User`: authentication, email, name
+- **APIs/Integrations:**
+  - External GIS data source (e.g., PCPA GIS)
+  - Internal RESTful APIs for CRUD operations
+- **Infrastructure:**
+  - PostgreSQL database
+  - Redis for Sidekiq
+  - Dockerized deployment (Dockerfile present)
+
+# Development Roadmap
+- **MVP Requirements:**
+  - House and resident data model/schema
+  - Interactive map with house markers and boundaries
+  - Resident CRUD with privacy controls
+  - User authentication and profile claiming
+  - Nightly data import job
+  - Admin dashboard for data management
+- **Future Enhancements:**
+  - Resident messaging/notifications
+  - Event calendar for the neighborhood
+  - Advanced search/filtering
+  - Integration with additional data sources
+  - Analytics/dashboard for admins
+
+# Logical Dependency Chain
+- Set up data models and migrations (houses, residents, users)
+- Implement user authentication and admin roles
+- Build RESTful APIs for CRUD operations
+- Integrate Leaflet.js map and display house data
+- Add resident management UI and privacy controls
+- Implement background jobs for nightly data import
+- Add admin dashboard and audit/history features
+- Enhance with future features as needed
+
+# Risks and Mitigations
+- **Technical:**
+  - GIS data integration may be complex; mitigate by isolating in service objects and using robust error handling.
+  - Privacy requirements; mitigate by enforcing privacy flags at both API and UI layers.
+- **MVP Scope:**
+  - Risk of over-engineering; mitigate by focusing on core flows and iterating.
+- **Resource Constraints:**
+  - Limited dev time; mitigate by prioritizing MVP and automating tests.
+
+# Appendix
+- **Research:**
+  - PCPA GIS API documentation
+  - Leaflet.js integration guides
+  - Rails 8 clean architecture patterns
+- **Technical Specs:**
+  - See `db/migrate/20240399000000_create_initial_schema.rb` for schema
+  - See `lib/connections/` for external service integration
+</PRD>
