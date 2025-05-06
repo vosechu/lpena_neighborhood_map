@@ -1,5 +1,6 @@
 class Api::HousesController < ApplicationController
   def index
-    render file: Rails.root.join('houses.json')
+    houses = House.includes(:residents).all
+    render json: houses.map { |house| HouseSerializer.new(house).as_json }
   end
 end

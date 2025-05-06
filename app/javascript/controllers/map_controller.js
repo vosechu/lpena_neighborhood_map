@@ -22,38 +22,27 @@ export default class extends Controller {
     fetch("/api/houses")
     .then(res => res.json())
     .then(data => {
-      data.features.forEach((feature) => {
-        const propertyGeometry = feature.geometry
-        const propertyDetails = feature.attributes
-
-        if (propertyGeometry && propertyGeometry.rings) {
-          const latlngs = propertyGeometry.rings[0].map(fromWebMercator)
-
+      data.forEach((house) => {
+        const geometry = house.boundary_geometry;
+        if (geometry && geometry.rings && geometry.rings[0]) {
+          const latlngs = geometry.rings[0].map(fromWebMercator);
           const polygon = L.polygon(latlngs, {
             color: "#3388ff",
             weight: 1,
             fillOpacity: 0.3
-          }).addTo(this.map)
+          }).addTo(this.map);
 
-          const getOwnerList = (details) => {
-            const owners = [
-              details.OWNER1_PU,
-              details.OWNER2_PU,
-              details.OWNER3_PU
-            ].filter(owner => owner && owner !== "N/A") // Remove null/undefined and N/A values
-
-            return owners.map(owner =>
-              `<li>${owner.replace(/<[^>]*>/g, '')}</li>`
-            ).join('')
-          }
+          // Owners list
+          let owners = (house.residents || []).map(resident => resident.display_name || resident.official_name).filter(Boolean);
+          let ownersHtml = owners.length > 0 ? `<ul>${owners.map(o => `<li>${o}</li>`).join('')}</ul>` : 'None';
 
           polygon.bindPopup(`
-              <strong>${propertyDetails.SITE_ADDR}</strong><br>
-              Owner name(s):
-              <ul>${getOwnerList(propertyDetails)}</ul>
-            `)
-          }
-        })
+            <strong>${house.street_number} ${house.street_name}</strong><br>
+            ${house.city}, ${house.state} ${house.zip || ''}<br>
+            <b>Owners:</b> ${ownersHtml}
+          `);
+        }
       })
-    }
+    })
   }
+}
