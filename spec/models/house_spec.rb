@@ -25,7 +25,7 @@ RSpec.describe House do
 
     it 'can have many residents' do
       resident = create(:resident, house: house)
-      expect(house.residents.reload).to eq([resident])
+      expect(house.residents.reload).to eq([ resident ])
     end
 
     it 'can access users through residents' do

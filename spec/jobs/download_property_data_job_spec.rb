@@ -19,7 +19,7 @@ RSpec.describe DownloadPropertyDataJob do
             },
             'geometry' => {
               'rings' => [
-                [[-82.728144652, 27.772074174], [-82.728144652, 27.772074174]]
+                [ [ -82.728144652, 27.772074174 ], [ -82.728144652, 27.772074174 ] ]
               ]
             }
           }
@@ -106,13 +106,13 @@ RSpec.describe DownloadPropertyDataJob do
           described_class.perform_now
         }.to change(Resident, :count).by(2)
 
-        [old_resident1, old_resident2].each do |resident|
+        [ old_resident1, old_resident2 ].each do |resident|
           resident.reload
           expect(resident.last_seen_at).to eq(Time.current)
         end
 
         new_residents = existing_house.residents.current.order(:created_at)
-        expect(new_residents.map(&:official_name)).to eq(['SMITH, JOHN', 'SMITH, JANE'])
+        expect(new_residents.map(&:official_name)).to eq([ 'SMITH, JOHN', 'SMITH, JANE' ])
       end
     end
 

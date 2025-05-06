@@ -17,7 +17,7 @@ class CreateInitialSchema < ActiveRecord::Migration[8.0]
     end
 
     add_index :houses, :pcpa_uid, unique: true
-    add_index :houses, [:street_number, :street_name]
+    add_index :houses, [ :street_number, :street_name ]
 
     # Create users table
     create_table :users do |t|
@@ -51,7 +51,7 @@ class CreateInitialSchema < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :residents, [:house_id, :official_name]
+    add_index :residents, [ :house_id, :official_name ]
     add_index :residents, :user_id
   end
 end

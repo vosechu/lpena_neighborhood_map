@@ -23,7 +23,7 @@ class UpdateHouseOwnershipService
 
   def ownership_changed?
     current_owners = @house.residents.current.order(:created_at).pluck(:official_name)
-    new_owners = [@owner1, @owner2].compact
+    new_owners = [ @owner1, @owner2 ].compact
 
     current_owners.sort != new_owners.sort
   end
