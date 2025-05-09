@@ -34,10 +34,10 @@ namespace :import do
       else
         # Do nothing
       end
-      puts "=" * 80
+      puts '=' * 80
     end
 
-    puts "Import complete!"
+    puts 'Import complete!'
     puts "Residents created: #{created_count}"
     puts "Residents updated: #{updated_count}"
     puts "Errors/problematic rows: #{error_count}"
@@ -63,11 +63,11 @@ namespace :import do
     end
 
     # Use explicit official and display name columns
-    official_names = [fields['Owner 1 official name'], fields['Owner 2 official name']].compact.reject(&:blank?).map(&:upcase)
-    display_names = [fields['Owner 1 display name'], fields['Owner 2 display name']].compact.reject(&:blank?)
+    official_names = [ fields['Owner 1 official name'], fields['Owner 2 official name'] ].compact.reject(&:blank?).map(&:upcase)
+    display_names = [ fields['Owner 1 display name'], fields['Owner 2 display name'] ].compact.reject(&:blank?)
 
-    emails = [fields['Owner 1 Email'], fields['Owner 2 Email']].compact.reject(&:blank?)
-    phones = [fields['Owner 1 Phone number'], fields['Owner 2 phone number']].compact.reject(&:blank?)
+    emails = [ fields['Owner 1 Email'], fields['Owner 2 Email'] ].compact.reject(&:blank?)
+    phones = [ fields['Owner 1 Phone number'], fields['Owner 2 phone number'] ].compact.reject(&:blank?)
     household_members = fields['Household members']&.split(',')&.map(&:strip)&.reject(&:blank?) || []
     homepage = fields['Homepage']
     if homepage.present?
@@ -138,7 +138,7 @@ namespace :import do
     house = House.find_by(street_number: row[:street_number], street_name: row[:street_name])
     unless house
       log_problematic_row(row, 'House not found for single resident')
-      return [0, 0]
+      return [ 0, 0 ]
     end
 
     official_name = row[:official_names].first
@@ -159,9 +159,9 @@ namespace :import do
       if resident.changed?
         resident.save!
         puts "Updated resident: #{resident.official_name} at #{house.street_number} #{house.street_name}"
-        return [0, 1]
+        [ 0, 1 ]
       else
-        return [0, 0]
+        [ 0, 0 ]
       end
     else
       new_resident = Resident.create!(
@@ -176,7 +176,7 @@ namespace :import do
         first_seen_at: Time.current
       )
       puts "Created new resident: #{official_name} at #{house.street_number} #{house.street_name}"
-      return [1, 0]
+      [ 1, 0 ]
     end
   end
 
@@ -185,7 +185,7 @@ namespace :import do
     house = House.find_by(street_number: row[:street_number], street_name: row[:street_name])
     unless house
       log_problematic_row(row, 'House not found for multiple residents')
-      return [0, 0]
+      return [ 0, 0 ]
     end
 
     created_count = 0
@@ -227,7 +227,7 @@ namespace :import do
       end
     end
 
-    [created_count, updated_count]
+    [ created_count, updated_count ]
   end
 
   # Handle rows with only contact info
