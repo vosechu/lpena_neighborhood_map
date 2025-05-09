@@ -22,8 +22,8 @@ class HouseImportService
 
   def house_attributes
     {
-      street_number: @attrs['STR_NUM'],
-      street_name: @attrs['STR_NAME'],
+      street_number: @attrs['SITE_ADDR'].split(' ').first.to_i,
+      street_name: @attrs['SITE_ADDR'].split(' ')[1..-1].join(' '),
       city: extract_city,
       state: 'FL',  # Hardcoded since we only work with Florida properties
       zip: extract_zip,

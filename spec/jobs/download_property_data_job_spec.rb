@@ -9,8 +9,8 @@ RSpec.describe DownloadPropertyDataJob do
           {
             'attributes' => {
               'PCPA_UID' => '123',
-              'STR_NUM' => 6573,
-              'STR_NAME' => '1ST',
+              'SITE_ADDR' => '6573 1st Ave N',
+              'SITE_CITY' => 'St Petersburg',
               'SITE_CITYZIP' => 'St Petersburg, FL 33710',
               'LATITUDE' => 27.772074174,
               'LONGITUDE' => -82.728144652,
@@ -50,7 +50,7 @@ RSpec.describe DownloadPropertyDataJob do
       house = House.last
       expect(house.pcpa_uid).to eq('123')
       expect(house.street_number).to eq(6573)
-      expect(house.street_name).to eq('1ST')
+      expect(house.street_name).to eq('1st Ave N')
       expect(house.city).to eq('St Petersburg')
       expect(house.state).to eq('FL')
       expect(house.zip).to eq('33710')
