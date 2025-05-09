@@ -1,24 +1,39 @@
-# README
+# LPENA Neighborhood Map App
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
-
-Things you may want to cover:
-
-* Ruby version
-* System dependencies
-* Configuration
-* Database creation
-* Database initialization
-* How to run the test suite
-* Services (job queues, cache servers, search engines, etc.)
-* Deployment instructions
-* ...
 
 ## Starting
 
 ```
 bin/dev
+```
+
+## Standard Rails Operations
+
+### Start the Rails server
+```
+bin/rails server
+```
+
+### Open a Rails console
+```
+bin/rails console
+```
+
+### Reset the database (drop, create, migrate, seed)
+```
+bin/rails db:reset
+bundle exec rails runner 'DownloadPropertyDataJob.perform_now'
+rake import:legacy_residents
+```
+
+### Run the test suite (RSpec)
+```
+bundle exec rspec
+```
+
+### Run background jobs (Sidekiq)
+```
+bundle exec sidekiq
 ```
 
 ## Random zsh commands
