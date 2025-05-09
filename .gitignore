@@ -64,5 +64,8 @@ node_modules/
 .DS_Store
 # Task files
 tasks.json
-tasks/
+/tasks/
+!lib/tasks/
+!lib/tasks/**
+
 *.csv
