@@ -17,7 +17,7 @@ The project follows standard Ruby style conventions as defined in [.rubocop.yml]
 - Tests follow RSpec best practices
 - One expectation per test when possible
 - Use descriptive context and it blocks
-- Follow the pattern in [spec/jobs/download_property_data_job_spec.rb](mdc:spec/jobs/download_property_data_job_spec.rb)
+- Follow the patterns in [testing.mdc](mdc:.cursor/rules/testing.mdc)
 
 ## Automation
 - Guard automatically runs:
