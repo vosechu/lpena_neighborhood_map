@@ -28,20 +28,11 @@ class Resident < ApplicationRecord
   attribute :share_display_name, :boolean, default: false
 
   # Scopes
-  scope :current, -> { where(last_seen_at: nil) }
+  scope :current, -> { where(last_seen_at: nil).where('hidden IS NOT TRUE') }
+  # Only residents that are not hidden
+  scope :visible, -> { where('hidden IS NOT TRUE') }
 
   def display_name
     self[:display_name].presence || official_name
-  end
-
-  # Returns a hash of shareable information based on privacy settings
-  def shareable_info
-    {}.tap do |info|
-      info[:display_name] = display_name if share_display_name
-      info[:email] = email if share_email && email.present?
-      info[:phone] = phone if share_phone && phone.present?
-      info[:birthdate] = birthdate if share_birthdate && birthdate.present?
-      info[:welcomed_on] = welcomed_on if welcomed_on.present?
-    end
   end
 end

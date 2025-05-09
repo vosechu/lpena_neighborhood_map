@@ -17,13 +17,7 @@ class HouseSerializer
       created_at: @house.created_at,
       updated_at: @house.updated_at,
       residents: @house.residents.map do |resident|
-        {
-          official_name: resident.official_name,
-          display_name: resident.display_name,
-          homepage: resident.homepage,
-          skills: resident.skills,
-          comments: resident.comments
-        }
+        ResidentSerializer.new(resident).as_json
       end
     }
   end

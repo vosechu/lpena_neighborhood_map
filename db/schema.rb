@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_20_215548) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_09_210228) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -54,6 +54,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_20_215548) do
     t.string "homepage"
     t.text "skills"
     t.text "comments"
+    t.boolean "hidden"
     t.index ["email"], name: "index_residents_on_email"
     t.index ["house_id", "last_seen_at"], name: "index_residents_on_house_id_and_last_seen_at"
     t.index ["house_id"], name: "index_residents_on_house_id"
