@@ -51,6 +51,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_20_215548) do
     t.boolean "share_display_name", default: false, null: false
     t.boolean "public_visibility", default: false, null: false
     t.bigint "user_id"
+    t.string "homepage"
+    t.text "skills"
+    t.text "comments"
     t.index ["email"], name: "index_residents_on_email"
     t.index ["house_id", "last_seen_at"], name: "index_residents_on_house_id_and_last_seen_at"
     t.index ["house_id"], name: "index_residents_on_house_id"

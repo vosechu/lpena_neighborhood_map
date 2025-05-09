@@ -1,6 +1,15 @@
+# frozen_string_literal: true
+
 class Resident < ApplicationRecord
   belongs_to :house
   belongs_to :user, optional: true
+
+  # Additional fields for import and resident self-management
+  # :homepage - string or text, optional, should be a valid URL if present
+  # :skills - text, optional, freeform
+  # :comments - text, optional, freeform
+
+  validates :homepage, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), allow_blank: true }, if: -> { homepage.present? }
 
   # Core data
   validates :official_name, presence: true
