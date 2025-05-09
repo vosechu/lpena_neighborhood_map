@@ -19,7 +19,10 @@ class HouseSerializer
       residents: @house.residents.map do |resident|
         {
           official_name: resident.official_name,
-          display_name: resident.display_name
+          display_name: resident.display_name,
+          homepage: resident.homepage,
+          skills: resident.skills,
+          comments: resident.comments
         }
       end
     }

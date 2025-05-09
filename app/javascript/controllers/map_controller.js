@@ -32,9 +32,21 @@ export default class extends Controller {
             fillOpacity: 0.3
           }).addTo(this.map);
 
-          // Owners list
-          let owners = (house.residents || []).map(resident => resident.display_name || resident.official_name).filter(Boolean);
-          let ownersHtml = owners.length > 0 ? `<ul>${owners.map(o => `<li>${o}</li>`).join('')}</ul>` : 'None';
+          // Owners list with details
+          let ownersHtml = (house.residents || []).map(resident => {
+            let html = `<strong>${resident.display_name || resident.official_name}</strong>`;
+            if (resident.homepage) {
+              html += `<br><b>Homepage:</b> <a href='${resident.homepage}' target='_blank' rel='noopener'>${resident.homepage}</a>`;
+            }
+            if (resident.skills) {
+              html += `<br><b>Skills:</b> ${resident.skills}`;
+            }
+            if (resident.comments) {
+              html += `<br><b>Comments:</b> ${resident.comments}`;
+            }
+            return `<li>${html}</li>`;
+          }).join('');
+          ownersHtml = ownersHtml ? `<ul>${ownersHtml}</ul>` : 'None';
 
           polygon.bindPopup(`
             <strong>${house.street_number} ${house.street_name}</strong><br>
