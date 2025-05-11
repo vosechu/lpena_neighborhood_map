@@ -17,7 +17,7 @@ alwaysApply: false
 - Let other methods behave normally
 - WebMock is configured globally to prevent accidental network calls
 
-## Example Test Structure
+## Example Unit Test Structure
 ```ruby
 RSpec.describe MyClass do
   let(:my_object) { described_class.new }
@@ -39,6 +39,12 @@ RSpec.describe MyClass do
 end
 ```
 
+## Example Controller Test Structure
+Controller tests follow Sandi-style and are only concerned with:
+* Status codes
+* Logic strictly within the controller action
+* Mocked calls to other classes
+
 ## Key Test Files
-- [spec/connections/pcpa_gis_connection_spec.rb](mdc:spec/connections/pcpa_gis_connection_spec.rb) - Example of connection testing
-- [spec/rails_helper.rb](mdc:spec/rails_helper.rb) - Global RSpec configuration
+- [spec_helper.rb](mdc:spec/spec_helper.rb) - Global rspec config
+- [rails_helper.rb](mdc:spec/rails_helper.rb) - Rspec config for things that require a database connection, most often for integration tests

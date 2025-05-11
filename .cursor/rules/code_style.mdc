@@ -13,21 +13,9 @@ The project follows standard Ruby style conventions as defined in [.rubocop.yml]
 - Use snake_case for methods and variables
 - Use CamelCase for classes and modules
 
-## Testing Style
-- Tests follow RSpec best practices
-- One expectation per test when possible
-- Use descriptive context and it blocks
-- Follow the patterns in [testing.mdc](mdc:.cursor/rules/testing.mdc)
-
-## Automation
-- Guard automatically runs:
-  - RSpec tests on file changes
-  - RuboCop style checks
-  - Other configured tasks
-- See [Guardfile](mdc:Guardfile) for automation configuration
-
 ## Process
-1. Write tests first (TDD)
-2. Run Guard while developing
-3. Fix all RuboCop warnings before committing
+1. Write failing tests first (TDD)
+2. Fix the code
+3. Run the specs and fix any failures
+3. Fix all RuboCop warnings
 4. Keep commits focused and well-documented
