@@ -20,6 +20,7 @@
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" %>
     <%= javascript_include_tag "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" %>
+    <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" %>
     <%= stylesheet_link_tag :app %>
     <%= javascript_importmap_tags %>
   </head>
@@ -28,5 +29,88 @@
     <main class="container mx-auto mt-28 px-5 flex">
       <%= yield %>
     </main>
+
+    <%# Empty modal div to be populated by the map controller %>
+    <div id="modal"></div>
+
+    <%# JS template for the house edit form %>
+    <script type="text/template" id="house-edit-form-template">
+    <div class="house-details">
+      <h2 class="house-name" data-house-field="name">{{= house.street_number }} {{= house.street_name }}</h2>
+
+      <div class="house-actions mt-4">
+        <button class="edit-house-btn" data-house-id="{{= house.id }}">
+          Edit House Details
+        </button>
+      </div>
+
+      <div class="residents-section mt-8">
+        <h3>Residents</h3>
+        <div class="residents-list">
+          {{ _.each(house.residents, function(resident) { }}
+            <div class="resident-item">
+              <div class="resident-name" data-resident-field="name">{{= resident.official_name }}</div>
+              <div class="resident-contact">
+                <div class="phone" data-resident-field="phone">{{= resident.phone }}</div>
+                <div class="email" data-resident-field="email">{{= resident.email }}</div>
+              </div>
+              <div class="resident-details">
+                <div class="homepage" data-resident-field="homepage">{{= resident.homepage }}</div>
+                <div class="skills" data-resident-field="skills">{{= resident.skills }}</div>
+                <div class="comments" data-resident-field="comments">{{= resident.comments }}</div>
+              </div>
+              <div class="resident-actions">
+                <button class="edit-resident-btn" data-resident-id="{{= resident.id }}">
+                  Edit Resident
+                </button>
+              </div>
+            </div>
+          {{ }); }}
+        </div>
+
+        <div class="add-resident mt-4">
+          <button class="add-resident-btn" data-house-id="{{= house.id }}">
+            Add New Resident
+          </button>
+        </div>
+      </div>
+    </div>
+    </script>
+
+    <%# JS template for the resident edit form %>
+    <script type="text/template" id="resident-edit-form-template">
+      <div class="resident-details">
+        <h3>Edit Resident</h3>
+        <div class="form-group">
+          <label for="resident-name">Name</label>
+          <input type="text" id="resident-name" data-resident-field="name" value="{{= resident.name }}">
+        </div>
+        <div class="form-group">
+          <label for="resident-phone">Phone</label>
+          <input type="text" id="resident-phone" data-resident-field="phone" value="{{= resident.phone }}">
+        </div>
+        <div class="form-group">
+          <label for="resident-email">Email</label>
+          <input type="email" id="resident-email" data-resident-field="email" value="{{= resident.email }}">
+        </div>
+        <div class="form-group">
+          <label for="resident-homepage">Homepage</label>
+          <input type="url" id="resident-homepage" data-resident-field="homepage" value="{{= resident.homepage }}">
+        </div>
+        <div class="form-group">
+          <label for="resident-skills">Skills</label>
+          <textarea id="resident-skills" data-resident-field="skills">{{= resident.skills }}</textarea>
+        </div>
+        <div class="form-group">
+          <label for="resident-comments">Comments</label>
+          <textarea id="resident-comments" data-resident-field="comments">{{= resident.comments }}</textarea>
+        </div>
+        <div class="resident-actions">
+          <button class="save-resident-btn" data-resident-id="{{= resident.id }}">
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </script>
   </body>
 </html>

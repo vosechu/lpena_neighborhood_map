@@ -3,10 +3,10 @@ require 'sidekiq-scheduler/web'
 
 Rails.application.routes.draw do
   namespace :api do
-    resources :houses, only: [ :index ]
+    resources :houses
+    resources :residents
   end
 
-  get 'pages/map'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

@@ -7,7 +7,9 @@ class ResidentSerializer
     return {} if @resident.hidden?
 
     info = {}
+    info[:id] = @resident.id
     info[:display_name] = @resident.display_name if @resident.share_display_name
+    info[:official_name] = @resident.official_name
     info[:email] = @resident.email if @resident.share_email && @resident.email.present?
     info[:phone] = @resident.phone if @resident.share_phone && @resident.phone.present?
     info[:birthdate] = @resident.birthdate if @resident.share_birthdate && @resident.birthdate.present?
