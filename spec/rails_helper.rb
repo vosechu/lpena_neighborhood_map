@@ -9,6 +9,7 @@ abort("The Rails environment is running in production mode!") if Rails.env.produ
 # that will avoid rails generators crashing because migrations haven't been run yet
 # return unless Rails.env.test?
 require 'rspec/rails'
+require 'capybara/rspec'
 # Add additional requires below this line. Rails is not loaded until this point!
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
@@ -33,6 +34,15 @@ begin
 rescue ActiveRecord::PendingMigrationError => e
   abort e.to_s.strip
 end
+
+Capybara.register_driver :chrome_with_console do |app|
+  options = Selenium::WebDriver::Options.chrome
+  options.add_option('goog:loggingPrefs', { browser: 'ALL' })
+  Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
+end
+
+Capybara.javascript_driver = :chrome_with_console
+
 RSpec.configure do |config|
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [
@@ -77,4 +87,9 @@ RSpec.configure do |config|
 
   # Configure FactoryBot
   config.include FactoryBot::Syntax::Methods
+
+  config.before(:suite) do
+    log_path = Rails.root.join('log/test.log')
+    File.truncate(log_path, 0) if File.exist?(log_path)
+  end
 end
