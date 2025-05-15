@@ -81,7 +81,7 @@ GEM
     benchmark (0.4.0)
     bigdecimal (3.1.9)
     bindex (0.8.1)
-    bootsnap (1.18.4)
+    bootsnap (1.18.5)
       msgpack (~> 1.2)
     brakeman (7.0.2)
       racc
@@ -414,10 +414,6 @@ GEM
     tilt (2.6.0)
     timecop (0.9.10)
     timeout (0.4.3)
-    turbo-rails (1.5.0)
-      actionpack (>= 6.0.0)
-      activejob (>= 6.0.0)
-      railties (>= 6.0.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (3.1.4)
@@ -480,7 +476,6 @@ DEPENDENCIES
   terminal-notifier-guard
   thruster
   timecop
-  turbo-rails (~> 1.5)
   tzinfo-data
   web-console
   webmock
