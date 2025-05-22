@@ -252,7 +252,7 @@ GEM
       nio4r (~> 2.0)
     raabro (1.4.0)
     racc (1.8.1)
-    rack (3.1.14)
+    rack (3.1.15)
     rack-session (2.1.1)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
@@ -370,10 +370,9 @@ GEM
       logger
       rack (>= 2.2.4)
       redis-client (>= 0.22.2)
-    sidekiq-scheduler (5.0.6)
+    sidekiq-scheduler (6.0.1)
       rufus-scheduler (~> 3.2)
-      sidekiq (>= 6, < 8)
-      tilt (>= 1.4.0, < 3)
+      sidekiq (>= 7.3, < 9)
     solid_cable (3.0.7)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -411,13 +410,8 @@ GEM
     thruster (0.1.13-aarch64-linux)
     thruster (0.1.13-arm64-darwin)
     thruster (0.1.13-x86_64-linux)
-    tilt (2.6.0)
     timecop (0.9.10)
     timeout (0.4.3)
-    turbo-rails (1.5.0)
-      actionpack (>= 6.0.0)
-      activejob (>= 6.0.0)
-      railties (>= 6.0.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (3.1.4)
@@ -480,7 +474,6 @@ DEPENDENCIES
   terminal-notifier-guard
   thruster
   timecop
-  turbo-rails (~> 1.5)
   tzinfo-data
   web-console
   webmock
