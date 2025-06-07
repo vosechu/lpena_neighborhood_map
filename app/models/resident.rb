@@ -21,11 +21,11 @@ class Resident < ApplicationRecord
   validates :phone, format: { with: /\A\+?[\d\s\-\(\)]+\z/ }, allow_blank: true
   validates :birthdate, comparison: { less_than: -> { Date.current } }, allow_nil: true
 
-  # Privacy settings - default to false for safety
-  attribute :share_email, :boolean, default: false
-  attribute :share_phone, :boolean, default: false
-  attribute :share_birthdate, :boolean, default: false
-  attribute :share_display_name, :boolean, default: false
+  # Privacy settings - now using hide_* fields (DB default is false)
+  # attribute :hide_email, :boolean
+  # attribute :hide_phone, :boolean
+  # attribute :hide_birthdate, :boolean
+  # attribute :hide_display_name, :boolean
 
   # Scopes
   scope :current, -> { where(last_seen_at: nil).where('hidden IS NOT TRUE') }

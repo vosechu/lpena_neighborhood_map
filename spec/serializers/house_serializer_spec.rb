@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe HouseSerializer do
   let(:house) { House.new(id: 1, street_number: 123, street_name: "Main St", city: "Townsville", state: "TS", zip: "12345", latitude: 1.23, longitude: 4.56, boundary_geometry: nil, created_at: Time.now, updated_at: Time.now) }
-  let(:resident) { Resident.new(display_name: "Jane", share_display_name: true, homepage: "https://example.com", skills: "gardening", comments: "Nice neighbor") }
+  let(:resident) { Resident.new(display_name: "Jane", hide_display_name: false, homepage: "https://example.com", skills: "gardening", comments: "Nice neighbor") }
 
   before do
     allow(house).to receive(:residents).and_return([ resident ])

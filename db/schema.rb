@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_09_210228) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_07_153258) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -45,16 +45,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_09_210228) do
     t.string "email"
     t.date "birthdate"
     t.date "welcomed_on"
-    t.boolean "share_email", default: false, null: false
-    t.boolean "share_phone", default: false, null: false
-    t.boolean "share_birthdate", default: false, null: false
-    t.boolean "share_display_name", default: false, null: false
     t.boolean "public_visibility", default: false, null: false
     t.bigint "user_id"
     t.string "homepage"
     t.text "skills"
     t.text "comments"
     t.boolean "hidden"
+    t.boolean "hide_display_name", default: false
+    t.boolean "hide_email", default: false
+    t.boolean "hide_phone", default: false
+    t.boolean "hide_birthdate", default: false
     t.index ["email"], name: "index_residents_on_email"
     t.index ["house_id", "last_seen_at"], name: "index_residents_on_house_id_and_last_seen_at"
     t.index ["house_id"], name: "index_residents_on_house_id"

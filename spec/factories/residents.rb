@@ -17,10 +17,17 @@ FactoryBot.define do
     end
 
     trait :sharing_all do
-      share_display_name { true }
-      share_email { true }
-      share_phone { true }
-      share_birthdate { true }
+      hide_display_name { false }
+      hide_email { false }
+      hide_phone { false }
+      hide_birthdate { false }
+    end
+
+    trait :hiding_all do
+      hide_display_name { true }
+      hide_email { true }
+      hide_phone { true }
+      hide_birthdate { true }
     end
 
     trait :moved_out do

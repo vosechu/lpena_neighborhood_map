@@ -8,11 +8,11 @@ class ResidentSerializer
 
     info = {}
     info[:id] = @resident.id
-    info[:display_name] = @resident.display_name if @resident.share_display_name
+    info[:display_name] = @resident.display_name unless @resident.hide_display_name
     info[:official_name] = @resident.official_name
-    info[:email] = @resident.email if @resident.share_email && @resident.email.present?
-    info[:phone] = @resident.phone if @resident.share_phone && @resident.phone.present?
-    info[:birthdate] = @resident.birthdate if @resident.share_birthdate && @resident.birthdate.present?
+    info[:email] = @resident.email if !@resident.hide_email && @resident.email.present?
+    info[:phone] = @resident.phone if !@resident.hide_phone && @resident.phone.present?
+    info[:birthdate] = @resident.birthdate if !@resident.hide_birthdate && @resident.birthdate.present?
     info[:welcomed_on] = @resident.welcomed_on if @resident.welcomed_on.present?
     info[:homepage] = @resident.homepage
     info[:skills] = @resident.skills

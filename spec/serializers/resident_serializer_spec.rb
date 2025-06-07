@@ -4,23 +4,23 @@ RSpec.describe ResidentSerializer do
   let(:resident) do
     Resident.new(
       display_name: "Jane",
-      share_display_name: true,
+      hide_display_name: false,
       email: "jane@example.com",
-      share_email: true,
+      hide_email: false,
       homepage: "https://example.com",
       skills: "gardening",
       comments: "Nice neighbor"
     )
   end
 
-  it "includes shareable fields when privacy is enabled" do
+  it "includes fields when not hidden" do
     json = ResidentSerializer.new(resident).as_json
     expect(json[:display_name]).to eq("Jane")
     expect(json[:email]).to eq("jane@example.com")
   end
 
-  it "does not include email if share_email is false" do
-    resident.share_email = false
+  it "does not include email if hide_email is true" do
+    resident.hide_email = true
     json = ResidentSerializer.new(resident).as_json
     expect(json).not_to have_key(:email)
   end
@@ -32,8 +32,8 @@ RSpec.describe ResidentSerializer do
     expect(json[:comments]).to eq("Nice neighbor")
   end
 
-  it "does not include display_name if share_display_name is false" do
-    resident.share_display_name = false
+  it "does not include display_name if hide_display_name is true" do
+    resident.hide_display_name = true
     json = ResidentSerializer.new(resident).as_json
     expect(json).not_to have_key(:display_name)
   end
