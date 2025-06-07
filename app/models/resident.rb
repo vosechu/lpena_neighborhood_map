@@ -41,7 +41,16 @@ class Resident < ApplicationRecord
   # Only residents that are not hidden
   scope :visible, -> { where('hidden IS NOT TRUE') }
 
+  # DEBUG: Log validation errors for easier troubleshooting in production
+  after_validation :log_validation_errors
+
   private
+
+  def log_validation_errors
+    return if errors.empty?
+
+    Rails.logger.debug { "Resident validation errors: #{errors.full_messages.join(', ')}" }
+  end
 
   # Adds https:// to homepage if the user omitted the scheme
   def normalize_homepage_url

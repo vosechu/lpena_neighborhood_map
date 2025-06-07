@@ -11,7 +11,11 @@ RSpec.describe 'Resident homepage normalization', type: :request do
       params = {
         resident: {
           display_name: 'Chuck',
-          homepage: 'example.com'
+          homepage: 'chuckvose.com',
+          phone: '503-367-6226',
+          email: 'chuck@example.com',
+          skills: 'Community building',
+          comments: 'Loves gatherings.'
         }
       }
 
@@ -20,7 +24,7 @@ RSpec.describe 'Resident homepage normalization', type: :request do
       expect(response).to have_http_status(:ok)
 
       resident.reload
-      expect(resident.homepage).to eq('https://example.com')
+      expect(resident.homepage).to eq('https://chuckvose.com')
       expect(resident.display_name).to eq('Chuck')
     end
   end
