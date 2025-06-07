@@ -31,7 +31,7 @@ class Resident < ApplicationRecord
   # Accept URLs with or without a protocol; prepend https:// when missing
   validates :homepage,
             format: {
-              with: /\(?:https?:\/\/)?[\w.-]+\.[a-z]{2,}(?:[\/\w .-]*)*\/?\z/i,
+              with: %r{\A(?:https?://)?[\w.-]+\.[a-z]{2,}(?:/[\w\-.]*)*\z}i,
               allow_blank: true,
               message: 'is not a valid URL'
             }
