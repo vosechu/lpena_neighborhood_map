@@ -9,6 +9,12 @@
  * Consider organizing styles into separate files for maintainability.
  */
 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .modal-overlay:empty {
   display: none !important;
 }
@@ -30,4 +36,13 @@
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+}
+
+.map-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
 }
