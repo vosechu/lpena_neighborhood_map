@@ -191,12 +191,23 @@ namespace :import do
     created_count = 0
     updated_count = 0
     row[:official_names].each_with_index do |official_name, idx|
-      display_name = row[:display_names][idx] || row[:display_names].first
-      email = row[:emails][idx] || row[:emails].first
-      phone = row[:phones][idx] || row[:phones].first
-      homepage = row[:homepage]
-      skills = row[:skills]
-      comments = row[:comments]
+      # Initialize all fields to nil
+      display_name, email, phone, homepage, skills, comments = nil, nil, nil, nil, nil, nil
+
+      # Pull other fields for this resident
+      display_name = row[:display_names][idx]
+      email = row[:emails][idx]
+      phone = row[:phones][idx]
+
+      # Only add comments, homepage, skills to the first resident for this house
+      # because the csv doesn't specify which resident these values are for.
+      if idx == 0
+        homepage = row[:homepage]
+        skills = row[:skills]
+        comments = row[:comments]
+      end
+
+      # Find and update or create the resident
       resident = house.residents.find_by(official_name: official_name)
       if resident
         resident.display_name = display_name if display_name.present?
