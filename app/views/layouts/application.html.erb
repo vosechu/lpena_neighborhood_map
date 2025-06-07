@@ -123,7 +123,7 @@
         <h3 class="text-lg font-semibold mb-4">Edit Resident</h3>
         <div class="form-group mb-4">
           <label for="resident-name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-          <input type="text" id="resident-name" data-resident-field="name" value="{{= resident.name }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
+          <input type="text" id="resident-name" data-resident-field="display_name" value="{{= resident.display_name }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
         </div>
         <div class="form-group mb-4">
           <label for="resident-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
@@ -136,6 +136,10 @@
         <div class="form-group mb-4">
           <label for="resident-homepage" class="block text-sm font-medium text-gray-700 mb-1">Homepage</label>
           <input type="url" id="resident-homepage" data-resident-field="homepage" value="{{= resident.homepage }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
+        </div>
+        <div class="form-group mb-4">
+          <label for="resident-birthdate" class="block text-sm font-medium text-gray-700 mb-1">Birthdate</label>
+          <input type="date" id="resident-birthdate" data-resident-field="birthdate" value="{{= resident.birthdate }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
         </div>
         <div class="form-group mb-4">
           <label for="resident-skills" class="block text-sm font-medium text-gray-700 mb-1">Skills</label>
