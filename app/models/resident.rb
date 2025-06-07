@@ -9,7 +9,8 @@ class Resident < ApplicationRecord
   # :skills - text, optional, freeform
   # :comments - text, optional, freeform
 
-  validates :homepage, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), allow_blank: true }, if: -> { homepage.present? }
+  # Normalize homepage URL before validations run
+  before_validation :normalize_homepage_url
 
   # Core data
   validates :official_name, presence: true
@@ -27,8 +28,27 @@ class Resident < ApplicationRecord
   # attribute :hide_birthdate, :boolean
   # attribute :hide_display_name, :boolean
 
+  # Accept URLs with or without a protocol; prepend https:// when missing
+  validates :homepage,
+            format: {
+              with: /\(?:https?:\/\/)?[\w.-]+\.[a-z]{2,}(?:[\/\w .-]*)*\/?\z/i,
+              allow_blank: true,
+              message: 'is not a valid URL'
+            }
+
   # Scopes
   scope :current, -> { where(last_seen_at: nil).where('hidden IS NOT TRUE') }
   # Only residents that are not hidden
   scope :visible, -> { where('hidden IS NOT TRUE') }
+
+  private
+
+  # Adds https:// to homepage if the user omitted the scheme
+  def normalize_homepage_url
+    return if homepage.blank?
+
+    unless homepage[%r{^https?://}i]
+      self.homepage = "https://#{homepage}"
+    end
+  end
 end
