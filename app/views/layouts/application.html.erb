@@ -31,7 +31,20 @@
     </main>
 
     <%# Empty modal div to be populated by the map controller %>
-    <div id="modal"></div>
+    <div id="modal"
+      role="dialog"
+      aria-modal="true"
+      class="fixed top-0 right-0 h-screen w-full md:w-1/3 md:max-w-xl bg-white z-50 shadow-2xl p-8 md:rounded-bl-lg transition-width duration-300">
+      <strong>Debug Modal</strong><br>
+      This modal is visible by default for debug purposes.<br>
+      It will disappear after 1 minute.
+    </div>
+    <script>
+      setTimeout(function() {
+        var modal = document.getElementById('modal');
+        if (modal) { modal.style.display = 'none'; }
+      }, 60000);
+    </script>
 
     <%# JS template for the house edit form %>
     <script type="text/template" id="house-edit-form-template">
@@ -39,7 +52,7 @@
       <h2 class="house-name" data-house-field="name">{{= house.street_number }} {{= house.street_name }}</h2>
 
       <div class="house-actions mt-4">
-        <button class="edit-house-btn" data-house-id="{{= house.id }}">
+        <button class="edit-house-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow transition-colors duration-150" data-house-id="{{= house.id }}">
           Edit House Details
         </button>
       </div>
@@ -60,7 +73,7 @@
                 <div class="comments" data-resident-field="comments">{{= resident.comments }}</div>
               </div>
               <div class="resident-actions">
-                <button class="edit-resident-btn" data-resident-id="{{= resident.id }}">
+                <button class="edit-resident-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow transition-colors duration-150" data-resident-id="{{= resident.id }}">
                   Edit Resident
                 </button>
               </div>
@@ -69,7 +82,7 @@
         </div>
 
         <div class="add-resident mt-4">
-          <button class="add-resident-btn" data-house-id="{{= house.id }}">
+          <button class="add-resident-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow transition-colors duration-150" data-house-id="{{= house.id }}">
             Add New Resident
           </button>
         </div>
