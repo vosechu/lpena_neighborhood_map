@@ -47,6 +47,10 @@ class Resident < ApplicationRecord
   def normalize_homepage_url
     return if homepage.blank?
 
+    # Remove leading/trailing whitespace
+    self.homepage = homepage.strip
+
+    # Prepend https:// if missing scheme
     unless homepage[%r{^https?://}i]
       self.homepage = "https://#{homepage}"
     end
