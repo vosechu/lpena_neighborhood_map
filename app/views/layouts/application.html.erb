@@ -62,7 +62,21 @@
         <div class="residents-list">
           {{ _.each(house.residents, function(resident) { }}
             <div class="resident-item">
-              <div class="resident-name" data-resident-field="name">{{= resident.official_name }}</div>
+              <div class="resident-name flex items-center gap-2" data-resident-field="name">
+                {{ if (!resident.display_name) { }}
+                  <span class="text-gray-400">{{= resident.official_name }}</span>
+                  <span class="relative group cursor-pointer" tabindex="0" aria-describedby="resident-info-tooltip">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
+                    </svg>
+                    <span id="resident-info-tooltip" class="absolute left-6 top-0 z-10 hidden group-hover:block group-focus-within:block bg-white text-gray-700 text-xs rounded shadow-lg px-3 py-2 w-64">
+                      This name comes from city records. You can override or hide it in this UI, but changes will not be sent to the city database.
+                    </span>
+                  </span>
+                {{ } else { }}
+                  <span>{{= resident.display_name }}</span>
+                {{ } }}
+              </div>
               <div class="resident-contact">
                 <div class="phone" data-resident-field="phone">{{= resident.phone }}</div>
                 <div class="email" data-resident-field="email">{{= resident.email }}</div>
