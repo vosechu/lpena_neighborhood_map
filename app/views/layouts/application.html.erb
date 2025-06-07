@@ -86,23 +86,33 @@
                 </button>
               </div>
               <div class="resident-contact gap-6 text-sm text-gray-600">
+                {{ if (resident.phone) { }}
                 <div class="phone" data-resident-field="phone">
                   <span class="font-semibold">Phone:</span> {{= resident.phone }}
                 </div>
+                {{ } }}
+                {{ if (resident.email) { }}
                 <div class="email" data-resident-field="email">
                   <span class="font-semibold">Email:</span> {{= resident.email }}
                 </div>
+                {{ } }}
               </div>
               <div class="resident-details gap-2 text-xs text-gray-500">
+                {{ if (resident.homepage) { }}
                 <div class="homepage" data-resident-field="homepage">
                   <span class="font-semibold">Homepage:</span> {{= resident.homepage }}
                 </div>
+                {{ } }}
+                {{ if (resident.skills) { }}
                 <div class="skills" data-resident-field="skills">
                   <span class="font-semibold">Skills:</span> {{= resident.skills }}
                 </div>
+                {{ } }}
+                {{ if (resident.comments) { }}
                 <div class="comments" data-resident-field="comments">
                   <span class="font-semibold">Comments:</span> {{= resident.comments }}
                 </div>
+                {{ } }}
               </div>
             </div>
           {{ }); }}
