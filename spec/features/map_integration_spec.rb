@@ -1,10 +1,10 @@
 require 'rails_helper'
 
 RSpec.feature "Map and Resident Editing Integration", type: :feature, js: true do
-  xscenario "User edits a resident's display name via the map popup modal" do
+  scenario "User edits a resident's homepage without protocol and sees it normalized" do
     # Setup: create a house and resident
     house = FactoryBot.create(:house)
-    resident = FactoryBot.create(:resident, house: house, display_name: "Old Name")
+    resident = FactoryBot.create(:resident, house: house, display_name: "Old Name", homepage: nil)
 
     visit root_path
 
@@ -41,26 +41,22 @@ RSpec.feature "Map and Resident Editing Integration", type: :feature, js: true d
     # Wait for the modal to appear
     expect(page).to have_selector('form', wait: 5)
 
-    # Fill in the display name and submit
-    fill_in 'Display name', with: 'New Name'
+    # Fill in the homepage without protocol and submit
+    fill_in 'Homepage', with: 'chuckvose.com'
     click_button 'Save'
 
     # Wait for the modal to disappear
     expect(page).not_to have_selector('form', wait: 5)
 
-    # The popup should now show the updated name
-    expect(page).to have_content('New Name')
-    expect(page).not_to have_content('Old Name')
+    # The popup should now show the normalized homepage when reopened
+    # Close any existing popup by pressing Escape (handled by JS)
+    page.send_keys :escape
 
-    # Try to edit again with invalid homepage
-    within('.leaflet-popup-content') do
-      click_link 'Edit'
-    end
-    expect(page).to have_selector('form', wait: 5)
-    fill_in 'Homepage', with: 'invalid-homepage-url'
-    click_button 'Save'
-    # The form should still be visible and show a validation error
-    expect(page).to have_selector('form', wait: 5)
-    expect(page).to have_content('Homepage must start with https://')
+    # Click polygon again to reopen popup
+    find('.leaflet-interactive', match: :first).click
+
+    expect(page).to have_content('https://chuckvose.com', wait: 5)
+
+    # Ensure there are no validation errors in the server log
   end
 end
