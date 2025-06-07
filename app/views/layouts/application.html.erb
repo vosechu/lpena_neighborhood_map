@@ -48,24 +48,26 @@
 
     <%# JS template for the house edit form %>
     <script type="text/template" id="house-edit-form-template">
-    <div class="house-details">
-      <h2 class="house-name" data-house-field="name">{{= house.street_number }} {{= house.street_name }}</h2>
-
-      <div class="house-actions mt-4">
-        <button class="edit-house-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow transition-colors duration-150" data-house-id="{{= house.id }}">
-          Edit House Details
+    <div class="house-details bg-white max-w-md mx-auto">
+      <h2 class="house-name text-xl font-bold mb-2 text-blue-800 flex items-center gap-2" data-house-field="name">
+        {{= house.street_number }} {{= house.street_name }}
+        <button class="edit-house-btn ml-2 p-1 rounded hover:bg-blue-100 focus:outline-none" data-house-id="{{= house.id }}" aria-label="Edit House Details">
+          <!-- Heroicons: pencil-square -->
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+          </svg>
         </button>
-      </div>
+      </h2>
 
-      <div class="residents-section mt-8">
-        <h3>Residents</h3>
-        <div class="residents-list">
+      <div class="residents-section mt-4">
+        <div class="residents-list flex flex-col gap-4">
           {{ _.each(house.residents, function(resident) { }}
-            <div class="resident-item">
-              <div class="resident-name flex items-center gap-2" data-resident-field="name">
+            <div class="resident-item flex flex-col gap-2">
+              <div class="resident-name flex items-center gap-2 font-medium text-gray-800" data-resident-field="name">
                 {{ if (!resident.display_name) { }}
                   <span class="text-gray-400">{{= resident.official_name }}</span>
                   <span class="relative group cursor-pointer" tabindex="0" aria-describedby="resident-info-tooltip">
+                    <!-- Heroicons: information-circle -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
                     </svg>
@@ -76,26 +78,37 @@
                 {{ } else { }}
                   <span>{{= resident.display_name }}</span>
                 {{ } }}
-              </div>
-              <div class="resident-contact">
-                <div class="phone" data-resident-field="phone">{{= resident.phone }}</div>
-                <div class="email" data-resident-field="email">{{= resident.email }}</div>
-              </div>
-              <div class="resident-details">
-                <div class="homepage" data-resident-field="homepage">{{= resident.homepage }}</div>
-                <div class="skills" data-resident-field="skills">{{= resident.skills }}</div>
-                <div class="comments" data-resident-field="comments">{{= resident.comments }}</div>
-              </div>
-              <div class="resident-actions">
-                <button class="edit-resident-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow transition-colors duration-150" data-resident-id="{{= resident.id }}">
-                  Edit Resident
+                <button class="edit-resident-btn ml-2 p-1 rounded hover:bg-blue-100 focus:outline-none" data-resident-id="{{= resident.id }}" aria-label="Edit Resident">
+                  <!-- Heroicons: pencil-square -->
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                  </svg>
                 </button>
+              </div>
+              <div class="resident-contact gap-6 text-sm text-gray-600">
+                <div class="phone" data-resident-field="phone">
+                  <span class="font-semibold">Phone:</span> {{= resident.phone }}
+                </div>
+                <div class="email" data-resident-field="email">
+                  <span class="font-semibold">Email:</span> {{= resident.email }}
+                </div>
+              </div>
+              <div class="resident-details gap-2 text-xs text-gray-500">
+                <div class="homepage" data-resident-field="homepage">
+                  <span class="font-semibold">Homepage:</span> {{= resident.homepage }}
+                </div>
+                <div class="skills" data-resident-field="skills">
+                  <span class="font-semibold">Skills:</span> {{= resident.skills }}
+                </div>
+                <div class="comments" data-resident-field="comments">
+                  <span class="font-semibold">Comments:</span> {{= resident.comments }}
+                </div>
               </div>
             </div>
           {{ }); }}
         </div>
 
-        <div class="add-resident mt-4">
+        <div class="add-resident mt-6 flex justify-end">
           <button class="add-resident-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow transition-colors duration-150" data-house-id="{{= house.id }}">
             Add New Resident
           </button>

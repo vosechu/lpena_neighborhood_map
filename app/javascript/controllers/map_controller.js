@@ -28,6 +28,25 @@ export default class extends Controller {
           this.addHousePolygon(house);
         })
       })
+
+    // Add Escape key handler
+    this._handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        // Hide modal
+        var modal = document.getElementById('modal');
+        if (modal) { modal.style.display = 'none'; }
+        // Close any open Leaflet popup
+        if (this.map && this.map.closePopup) {
+          this.map.closePopup();
+        }
+      }
+    };
+    document.addEventListener('keydown', this._handleEscape);
+  }
+
+  disconnect() {
+    // Remove Escape key handler
+    document.removeEventListener('keydown', this._handleEscape);
   }
 
   addHousePolygon(house) {
@@ -49,27 +68,38 @@ export default class extends Controller {
   }
 
   addHousePopup(house) {
-    // TODO: Render the house details with resident details and edit buttons in a leaflet popup
+    // Render the house details with resident details and edit buttons in a leaflet popup
     const popup = L.popup({
       closeOnClick: false,
       keepInView: true,
-      autoPan: false
+      autoPan: true
     }).setLatLng([house.latitude, house.longitude]).setContent(this.renderHouseAndResidentsDetails(house));
     // Add event listeners after the popup content is added to the DOM
     setTimeout(() => {
-      // Handle house edit button
-      const editHouseBtn = document.querySelector('.edit-house-btn');
-      if (editHouseBtn) {
-        editHouseBtn.addEventListener('click', () => {
-          // TODO: Implement house edit form template and handler
+      // Handle house edit buttons (all, in case there are multiple)
+      const editHouseBtns = document.querySelectorAll('.house-name .edit-house-btn');
+      editHouseBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          // Show a placeholder modal for house editing
+          const modalEl = document.getElementById('modal');
+          modalEl.innerHTML = `
+            <div class="p-6">
+              <h3 class="text-lg font-semibold mb-4">Edit House Details</h3>
+              <p class="text-gray-600">(House editing form coming soon!)</p>
+              <div class="mt-6 flex justify-end">
+                <button class="close-modal-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded" onclick="document.getElementById('modal').style.display='none'">Close</button>
+              </div>
+            </div>
+          `;
+          modalEl.style.display = 'block';
         });
-      }
+      });
 
       // Handle resident edit buttons
-      const editResidentBtns = document.querySelectorAll('.edit-resident-btn');
+      const editResidentBtns = document.querySelectorAll('.resident-name .edit-resident-btn');
       editResidentBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-          const residentId = e.target.dataset.residentId;
+          const residentId = e.target.closest('button').dataset.residentId;
           const resident = house.residents.find(r => r.id === parseInt(residentId));
 
           if (resident) {
