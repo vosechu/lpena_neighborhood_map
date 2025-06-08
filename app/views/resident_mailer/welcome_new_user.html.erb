@@ -1,0 +1,38 @@
+<h1>Welcome to the Neighborhood Map!</h1>
+
+<p>Hello <%= @user.name %>,</p>
+
+<p><%= @invited_by_user.name %> has added you to our neighborhood directory and thought you might like to have access to the neighborhood map and information.</p>
+
+<h2>Your Information</h2>
+<ul>
+  <li><strong>Name:</strong> <%= @resident.display_name.presence || @resident.official_name %></li>
+  <% if @resident.phone.present? %>
+    <li><strong>Phone:</strong> <%= @resident.phone %></li>
+  <% end %>
+  <% if @resident.homepage.present? %>
+    <li><strong>Website:</strong> <%= link_to @resident.homepage, @resident.homepage %></li>
+  <% end %>
+  <% if @resident.skills.present? %>
+    <li><strong>Skills:</strong> <%= @resident.skills %></li>
+  <% end %>
+</ul>
+
+<h2>Get Started</h2>
+<p>You can now:</p>
+<ul>
+  <li>View the neighborhood map and see information about your neighbors</li>
+  <li>Update your own information and preferences</li>
+  <li>Add information about other neighbors you meet</li>
+</ul>
+
+<p><strong>To access your account, click here:</strong></p>
+<p><%= link_to "Set Up Your Account", @login_url, style: "background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;" %></p>
+
+<p>This link will allow you to set up your password and access the neighborhood map.</p>
+
+<h2>Privacy & Opt-Out</h2>
+<p>We respect your privacy. If you don't want to be part of the neighborhood directory, you can opt out at any time by contacting us or not setting up your account.</p>
+
+<p>Thanks,<br>
+The Neighborhood Map Team</p>

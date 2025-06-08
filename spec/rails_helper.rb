@@ -50,29 +50,28 @@ RSpec.configure do |config|
   ]
 
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
-  # examples within a transaction, remove the following line or assign false
-  # instead of true.
+  # examples within a database transaction, remove the following line or assign
+  # false instead of true.
   config.use_transactional_fixtures = true
 
   # You can uncomment this line to turn off ActiveRecord support entirely.
   # config.use_active_record = false
 
-  # RSpec Rails uses metadata to mix in different behaviours to your tests,
-  # for example enabling you to call `get` and `post` in request specs. e.g.:
+  # RSpec Rails can automatically mix in different behaviours to your tests
+  # based on their file location, for example enabling you to call `get` and
+  # `post` in specs under `spec/controllers`.
   #
-  #     RSpec.describe UsersController, type: :request do
+  # You can disable this behaviour by removing the line below, and instead
+  # explicitly tag your specs with their type, e.g.:
+  #
+  #     RSpec.describe UsersController, type: :controller do
   #       # ...
   #     end
   #
   # The different available types are documented in the features, such as in
-  # https://rspec.info/features/7-1/rspec-rails
-  #
-  # You can also this infer these behaviours automatically by location, e.g.
-  # /spec/models would pull in the same behaviour as `type: :model` but this
-  # behaviour is considered legacy and will be removed in a future version.
-  #
-  # To enable this behaviour uncomment the line below.
-  # config.infer_spec_type_from_file_location!
+  # https://rspec-info.github.io/rspec-rails/file.method-summary.html
+
+  config.infer_spec_type_from_file_location!
 
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
@@ -96,5 +95,13 @@ RSpec.configure do |config|
   config.before(:suite) do
     log_path = Rails.root.join('log/test.log')
     File.truncate(log_path, 0) if File.exist?(log_path)
+  end
+
+  # Configure inline job processing for tests to avoid Redis dependency
+  config.before(:each) do
+    ActiveJob::Base.queue_adapter = :test
+    # Clear any enqueued jobs before each test
+    ActiveJob::Base.queue_adapter.enqueued_jobs.clear
+    ActiveJob::Base.queue_adapter.performed_jobs.clear
   end
 end

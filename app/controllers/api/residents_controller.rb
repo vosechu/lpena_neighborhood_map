@@ -12,7 +12,7 @@ class Api::ResidentsController < ApplicationController
   end
 
   def update
-    if @resident.update(resident_params)
+    if ResidentUpdateService.update_resident(@resident, resident_params, current_user)
       render json: @resident
     else
       render json: @resident.errors, status: :unprocessable_entity

@@ -6,12 +6,15 @@ class ResidentUpdateService
     # Update the resident
     if resident.update(params)
       # Check if email was added and create user if needed
+      user_created = false
       if email_was_added?(original_email, resident.email)
         create_user_for_resident(resident, updated_by_user)
+        user_created = true
       end
       
       # Send notification email if resident has email and data changed
-      if should_send_notification?(resident, original_attributes)
+      # But don't send change notification if we just created a user (they get a welcome email instead)
+      if !user_created && should_send_notification?(resident, original_attributes)
         send_change_notification(resident, original_attributes, updated_by_user)
       end
       
@@ -68,6 +71,7 @@ class ResidentUpdateService
 
   def self.should_send_notification?(resident, original_attributes)
     return false if resident.email.blank?
+    return false if resident.email_notifications_opted_out?
     
     # Check if any displayable fields changed
     changed_fields = %w[display_name phone homepage skills comments].select do |field|

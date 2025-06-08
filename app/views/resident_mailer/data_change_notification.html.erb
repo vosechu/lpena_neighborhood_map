@@ -1,0 +1,63 @@
+<h1>Your Neighborhood Information Has Been Updated</h1>
+
+<p>Hello <%= @resident.display_name.presence || @resident.official_name %>,</p>
+
+<p><%= @updated_by_user.name %> has updated some information about you in our neighborhood directory. Here's what changed:</p>
+
+<h2>Changes Made</h2>
+<table style="border-collapse: collapse; width: 100%; margin: 20px 0;">
+  <thead>
+    <tr style="background-color: #f3f4f6;">
+      <th style="border: 1px solid #d1d5db; padding: 12px; text-align: left;">Field</th>
+      <th style="border: 1px solid #d1d5db; padding: 12px; text-align: left;">Previous Value</th>
+      <th style="border: 1px solid #d1d5db; padding: 12px; text-align: left;">New Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @changes.each do |field, change| %>
+      <tr>
+        <td style="border: 1px solid #d1d5db; padding: 12px;"><strong><%= field.humanize %></strong></td>
+        <td style="border: 1px solid #d1d5db; padding: 12px;">
+          <%= change[:from].present? ? change[:from] : '<em>blank</em>'.html_safe %>
+        </td>
+        <td style="border: 1px solid #d1d5db; padding: 12px;">
+          <%= change[:to].present? ? change[:to] : '<em>blank</em>'.html_safe %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<h2>Your Current Information</h2>
+<ul>
+  <li><strong>Name:</strong> <%= @resident.display_name.presence || @resident.official_name %></li>
+  <% if @resident.phone.present? %>
+    <li><strong>Phone:</strong> <%= @resident.phone %></li>
+  <% end %>
+  <% if @resident.email.present? %>
+    <li><strong>Email:</strong> <%= @resident.email %></li>
+  <% end %>
+  <% if @resident.homepage.present? %>
+    <li><strong>Website:</strong> <%= link_to @resident.homepage, @resident.homepage %></li>
+  <% end %>
+  <% if @resident.skills.present? %>
+    <li><strong>Skills:</strong> <%= @resident.skills %></li>
+  <% end %>
+  <% if @resident.comments.present? %>
+    <li><strong>Comments:</strong> <%= @resident.comments %></li>
+  <% end %>
+</ul>
+
+<h2>Questions or Concerns?</h2>
+<p>If you have any questions about these changes or would prefer not to receive these notifications, please contact us or use the opt-out link below.</p>
+
+<p><%= link_to "Opt out of future notifications", @opt_out_url, style: "color: #6b7280; text-decoration: underline;" %></p>
+
+<p>Thanks,<br>
+The Neighborhood Map Team</p>
+
+<hr style="margin: 30px 0; border: 1px solid #e5e7eb;">
+<p style="font-size: 12px; color: #6b7280;">
+  This change was made by <%= @updated_by_user.name %> (<%= @updated_by_user.email %>). 
+  Our neighborhood directory helps neighbors connect and stay informed about our community.
+</p>

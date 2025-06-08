@@ -8,6 +8,10 @@ Rails.application.routes.draw do
   # Admin interface
   mount RailsAdmin::Engine => '/admin', as: 'rails_admin'
 
+  # Opt-out functionality for resident notifications
+  get '/opt-out/:token', to: 'opt_outs#show', as: :opt_out
+  post '/opt-out/:token', to: 'opt_outs#create'
+
   namespace :api do
     resources :houses
     resources :residents
