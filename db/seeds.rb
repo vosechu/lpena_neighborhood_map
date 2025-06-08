@@ -1,9 +1,14 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
+# This file should contain all the record creation needed to seed the database with its default values.
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+
+# For test data, use FactoryBot factories instead:
+# - Regular user: create(:user)
+# - Admin user: create(:admin_user)
+# - House with residents: create(:house, :with_residents)
+# - Resident: create(:resident)
+
+# Example of creating test data in development:
+# if Rails.env.development?
+#   admin = create(:admin_user, email: 'admin@example.com', name: 'Admin User')
+#   user = create(:user, email: 'user@example.com', name: 'Test User')
+# end

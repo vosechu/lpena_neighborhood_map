@@ -1,0 +1,53 @@
+<h1>Your neighborhood information has been updated</h1>
+
+<p>Hello <%= @resident.display_name.presence || @resident.official_name %>,</p>
+
+<p>Someone in your neighborhood has updated information about you in our local directory. Here's what changed:</p>
+
+<div style="background-color: #F3F4F6; padding: 16px; border-radius: 8px; margin: 16px 0;">
+  <h3>Changes Made:</h3>
+  <% @changes.each do |field, change| %>
+    <div style="margin-bottom: 12px;">
+      <strong><%= field.humanize %>:</strong>
+      <% if change[:from].blank? %>
+        <span style="color: #059669;">Added: "<%= change[:to] %>"</span>
+      <% elsif change[:to].blank? %>
+        <span style="color: #DC2626;">Removed: "<%= change[:from] %>"</span>
+      <% else %>
+        <span style="color: #7C2D12;">Changed from "<%= change[:from] %>" to "<%= change[:to] %>"</span>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<h2>About these updates</h2>
+<p>Our neighborhood directory allows any neighbor to add or update information about residents they meet. This helps keep our community connected and the information current.</p>
+
+<p><strong>This is run by neighbors, for neighbors</strong> - it's a grassroots effort to help our community stay connected, not a corporate data collection service.</p>
+
+<h2>Correcting or hiding information</h2>
+<p>If any of this information is incorrect or you'd prefer not to have it listed, you have several options:</p>
+
+<h3>Option 1: Create an account and manage it yourself</h3>
+<p>If you don't already have an account, anyone can add your email address to create one for you. Once you have an account, you can:</p>
+<ul>
+  <li>Correct any incorrect information</li>
+  <li>Add or remove any details you want</li>
+  <li>Control what information is visible</li>
+</ul>
+
+<h3>Option 2: Hide just this information</h3>
+<p>If you'd like to keep some information visible but hide what was just changed, please contact vosechu@gmail.com and specify which fields you'd like hidden.</p>
+
+<h3>Option 3: Remove yourself completely</h3>
+<p>If you'd prefer not to be in the directory at all, you can remove yourself completely:</p>
+<p><%= link_to "Remove me from the directory", @opt_out_url, style: "background-color: #DC2626; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;" %></p>
+
+<p><em>This will hide all your information from the neighborhood map and directory, and you'll stop receiving these notification emails.</em></p>
+
+<h2>Questions?</h2>
+<p>If you have any questions about these changes or the neighborhood directory, please contact vosechu@gmail.com.</p>
+
+<p>Thanks for being part of our neighborhood community!</p>
+
+<p>—Your neighbors</p>

@@ -4,6 +4,13 @@ FactoryBot.define do
     sequence(:official_name) { |n| "Resident #{n}" }
     first_seen_at { Time.current }
     last_import_at { Time.current }
+    display_name { "Test User" }
+    phone { "555-1234" }
+    sequence(:email) { |n| "user#{n}@example.com" }
+    homepage { "https://example.com" }
+    skills { "Programming, Testing" }
+    comments { "Test comment" }
+    email_notifications_opted_out { false }
 
     trait :minimal do
       # For when we want to set most attributes manually
@@ -40,6 +47,18 @@ FactoryBot.define do
 
     trait :former do
       moved_out_at { Time.current }
+    end
+
+    trait :with_user do
+      association :user
+    end
+
+    trait :opted_out_of_notifications do
+      email_notifications_opted_out { true }
+    end
+
+    trait :without_email do
+      email { nil }
     end
   end
 end
