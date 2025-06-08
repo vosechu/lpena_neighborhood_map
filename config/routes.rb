@@ -2,6 +2,12 @@ require 'sidekiq/web'
 require 'sidekiq-scheduler/web'
 
 Rails.application.routes.draw do
+  # Authentication
+  devise_for :users
+
+  # Admin interface
+  mount RailsAdmin::Engine => '/admin', as: 'rails_admin'
+
   namespace :api do
     resources :houses
     resources :residents
@@ -20,8 +26,14 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root 'pages#map'
 
-  # Mount Sidekiq web UI in development only
+  # Mount Sidekiq web UI with authentication
   if Rails.env.development?
+    mount Sidekiq::Web => '/sidekiq'
+  else
+    # In production, protect Sidekiq with authentication
+    Sidekiq::Web.use(Rack::Auth::Basic) do |user, password|
+      [user, password] == ['admin', ENV['SIDEKIQ_PASSWORD']]
+    end
     mount Sidekiq::Web => '/sidekiq'
   end
 end

@@ -88,6 +88,11 @@ RSpec.configure do |config|
   # Configure FactoryBot
   config.include FactoryBot::Syntax::Methods
 
+  # Include Devise test helpers
+  config.include Devise::Test::ControllerHelpers, type: :controller
+  config.include Devise::Test::IntegrationHelpers, type: :request
+  config.include Warden::Test::Helpers
+  
   config.before(:suite) do
     log_path = Rails.root.join('log/test.log')
     File.truncate(log_path, 0) if File.exist?(log_path)
