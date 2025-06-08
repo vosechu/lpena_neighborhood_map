@@ -28,9 +28,6 @@ gem 'cancancan'
 # Admin interface
 gem 'rails_admin'
 
-# Icons
-gem 'heroicons'
-
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: %i[ windows jruby ]
 
