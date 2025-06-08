@@ -20,6 +20,9 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root 'pages#map'
 
+  # Residents management page
+  get 'residents' => 'pages#residents'
+
   # Mount Sidekiq web UI in development only
   if Rails.env.development?
     mount Sidekiq::Web => '/sidekiq'

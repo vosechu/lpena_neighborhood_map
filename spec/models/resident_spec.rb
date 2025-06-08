@@ -64,4 +64,40 @@ RSpec.describe Resident do
       expect(resident.first_seen_at).to be_present
     end
   end
+
+  describe '#subscribed?' do
+    it 'returns true for odd IDs' do
+      resident = build(:resident, id: 1)
+      expect(resident.subscribed?).to be true
+    end
+
+    it 'returns false for even IDs' do
+      resident = build(:resident, id: 2)
+      expect(resident.subscribed?).to be false
+    end
+  end
+
+  describe '.subscribed scope' do
+    before do
+      create(:resident, id: 1) # Should be subscribed
+      create(:resident, id: 2) # Should not be subscribed
+      create(:resident, id: 3) # Should be subscribed
+    end
+
+    it 'returns only subscribed residents' do
+      subscribed_ids = Resident.subscribed.pluck(:id)
+      expect(subscribed_ids).to contain_exactly(1, 3)
+    end
+  end
+
+  describe '.new_residents scope' do
+    before do
+      create(:resident, first_seen_at: 15.days.ago)
+      create(:resident, first_seen_at: 45.days.ago)
+    end
+
+    it 'returns residents from the last 30 days' do
+      expect(Resident.new_residents.count).to eq(1)
+    end
+  end
 end

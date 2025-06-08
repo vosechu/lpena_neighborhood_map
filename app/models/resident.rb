@@ -31,4 +31,15 @@ class Resident < ApplicationRecord
   scope :current, -> { where(last_seen_at: nil).where('hidden IS NOT TRUE') }
   # Only residents that are not hidden
   scope :visible, -> { where('hidden IS NOT TRUE') }
+
+  # Stub method for Groups.io integration - returns random true/false
+  # TODO: Replace with actual Groups.io API integration
+  def subscribed?
+    # Use deterministic logic based on resident ID to ensure consistency with scope
+    (id % 2) == 1
+  end
+
+  # Additional scopes for filtering
+  scope :subscribed, -> { where('(id % 2) = 1') } # Stub: deterministic "random" based on ID
+  scope :new_residents, -> { where(first_seen_at: 30.days.ago..Time.current) }
 end
