@@ -8,14 +8,14 @@ RSpec.describe 'Authentication', type: :request do
         expect(response).to redirect_to(new_user_session_path)
       end
 
-      it 'allows access to public map page' do
+      it 'redirects to login page for map page' do
         get root_path
-        expect(response).to have_http_status(200)
+        expect(response).to redirect_to(new_user_session_path)
       end
     end
 
     context 'when logged in as regular user' do
-      let(:user) { User.create!(name: 'Test User', email: 'test@example.com', password: 'password123', role: 'user') }
+      let(:user) { create(:user) }
 
       before do
         sign_in user
@@ -26,13 +26,18 @@ RSpec.describe 'Authentication', type: :request do
         expect(response).to have_http_status(200)
       end
 
+      it 'allows access to map page' do
+        get root_path
+        expect(response).to have_http_status(200)
+      end
+
       it 'denies access to admin interface' do
         expect { get rails_admin_path }.to raise_error(CanCan::AccessDenied)
       end
     end
 
     context 'when logged in as admin' do
-      let(:admin) { User.create!(name: 'Admin User', email: 'admin@example.com', password: 'password123', role: 'admin') }
+      let(:admin) { create(:admin_user) }
 
       before do
         sign_in admin
@@ -43,8 +48,11 @@ RSpec.describe 'Authentication', type: :request do
         expect(response).to have_http_status(200)
       end
 
-      # Skip admin interface test due to asset loading issues in test environment
-      # The authorization logic is tested through CanCanCan abilities
+      it 'allows access to map page' do
+        get root_path
+        expect(response).to have_http_status(200)
+      end
+
       it 'has admin permissions' do
         expect(admin.admin?).to be true
         ability = Ability.new(admin)
@@ -55,24 +63,18 @@ RSpec.describe 'Authentication', type: :request do
   end
 
   describe 'user registration' do
-    it 'allows user registration with valid data' do
-      post user_registration_path, params: {
-        user: {
-          name: 'New User',
-          email: 'newuser@example.com',
-          password: 'password123',
-          password_confirmation: 'password123'
-        }
-      }
-      
-      expect(response).to redirect_to(root_path)
-      expect(User.find_by(email: 'newuser@example.com')).to be_present
-      expect(User.find_by(email: 'newuser@example.com').role).to eq('user')
+    it 'registration routes are disabled' do
+      expect(Rails.application.routes.url_helpers).not_to respond_to(:user_registration_path)
+    end
+
+    it 'registration links are not available' do
+      get new_user_session_path
+      expect(response.body).not_to include('Sign up')
     end
   end
 
   describe 'password reset' do
-    let(:user) { User.create!(name: 'Test User', email: 'test@example.com', password: 'password123') }
+    let(:user) { create(:user) }
 
     it 'allows password reset request' do
       post user_password_path, params: { user: { email: user.email } }
@@ -81,6 +83,39 @@ RSpec.describe 'Authentication', type: :request do
       # Check that reset token was set
       user.reload
       expect(user.reset_password_token).to be_present
+    end
+  end
+
+  describe 'authorization rules' do
+    let(:user) { create(:user) }
+    let(:admin) { create(:admin_user) }
+    let(:other_user) { create(:user) }
+
+    context 'regular user abilities' do
+      let(:ability) { Ability.new(user) }
+
+      it 'can manage all residents' do
+        expect(ability.can?(:manage, Resident)).to be true
+      end
+
+      it 'can read all houses' do
+        expect(ability.can?(:read, House)).to be true
+      end
+
+      it 'can only manage own user record' do
+        expect(ability.can?(:read, user)).to be true
+        expect(ability.can?(:update, user)).to be true
+        expect(ability.can?(:read, other_user)).to be false
+        expect(ability.can?(:update, other_user)).to be false
+      end
+    end
+
+    context 'admin abilities' do
+      let(:ability) { Ability.new(admin) }
+
+      it 'can manage everything' do
+        expect(ability.can?(:manage, :all)).to be true
+      end
     end
   end
 end

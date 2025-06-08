@@ -2,8 +2,8 @@ require 'sidekiq/web'
 require 'sidekiq-scheduler/web'
 
 Rails.application.routes.draw do
-  # Authentication
-  devise_for :users
+  # Authentication - disable registration for closed site
+  devise_for :users, skip: [:registrations]
 
   # Admin interface
   mount RailsAdmin::Engine => '/admin', as: 'rails_admin'

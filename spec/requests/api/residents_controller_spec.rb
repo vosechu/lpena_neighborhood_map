@@ -1,38 +1,49 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::ResidentsController', type: :request do
-  describe 'PATCH /api/residents/:id' do
-    let(:resident) { instance_double(Resident, id: 1, as_json: { id: 1, display_name: 'Test' }) }
-    let(:valid_params) { { resident: { display_name: 'Test' } } }
-    let(:invalid_params) { { resident: { display_name: '' } } }
-    let(:errors) { { display_name: [ "can't be blank" ] } }
+  let(:user) { create(:user) }
+  let!(:house) { create(:house) }
+  let!(:resident) { create(:resident, house: house) }
 
-    before do
-      allow(Resident).to receive(:find).with(resident.id.to_s).and_return(resident)
+  before do
+    sign_in user, scope: :user
+  end
+
+  describe 'GET /api/residents' do
+    it 'returns a successful response' do
+      get '/api/residents'
+      expect(response).to have_http_status(:ok)
     end
 
-    context 'with valid params' do
-      before do
-        allow(resident).to receive(:update).and_return(true)
-      end
+    it 'returns residents in JSON format' do
+      get '/api/residents'
+      json_response = JSON.parse(response.body)
+      expect(json_response).to be_an(Array)
+      expect(json_response.length).to eq(1)
+    end
+  end
 
+  describe 'PATCH /api/residents/:id' do
+    let(:valid_params) { { resident: { display_name: 'Updated Name' } } }
+    let(:invalid_params) { { resident: { email: 'invalid-email-format' } } }
+
+    context 'with valid params' do
       it 'updates the resident and returns JSON' do
         patch "/api/residents/#{resident.id}", params: valid_params
         expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)).to eq(resident.as_json.as_json)
+        
+        resident.reload
+        expect(resident.display_name).to eq('Updated Name')
       end
     end
 
     context 'with invalid params' do
-      before do
-        allow(resident).to receive(:update).and_return(false)
-        allow(resident).to receive(:errors).and_return(errors)
-      end
-
       it 'returns errors and unprocessable_entity status' do
         patch "/api/residents/#{resident.id}", params: invalid_params
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)).to eq(errors.as_json)
+        
+        json_response = JSON.parse(response.body)
+        expect(json_response).to have_key('email')
       end
     end
   end

@@ -3,7 +3,7 @@ class Api::ResidentsController < ApplicationController
   before_action :authorize_resource
 
   def index
-    @residents = Resident.accessible_by(current_ability).includes(:house)
+    @residents = Resident.all.includes(:house)
     render json: @residents.map { |resident| ResidentSerializer.new(resident).as_json }
   end
 

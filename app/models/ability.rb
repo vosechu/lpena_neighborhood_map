@@ -10,9 +10,8 @@ class Ability
     if user.admin?
       # Admin can manage everything
       can :manage, :all
-      # Rails Admin access (commented out for future merge)
-      # can :access, :rails_admin
-      # can :read, :dashboard
+      can :access, :rails_admin
+      can :read, :dashboard
     elsif user.user?
       # Regular users can read and manage ALL residents and houses
       can :read, House
