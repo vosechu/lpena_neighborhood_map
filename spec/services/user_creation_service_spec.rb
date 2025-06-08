@@ -12,7 +12,7 @@ RSpec.describe UserCreationService, type: :service do
       expect(user.email).to eq('test@example.com')
       expect(user.name).to eq('Test User')
       expect(user.role).to eq('user')
-      expect(user.encrypted_password).to be_present
+      expect(user.encrypted_password).to be_blank
     end
 
     it 'creates an admin user when specified' do
@@ -25,15 +25,29 @@ RSpec.describe UserCreationService, type: :service do
       expect(user).to be_persisted
       expect(user.role).to eq('admin')
       expect(user.admin?).to be true
+      expect(user.encrypted_password).to be_blank
     end
 
-    it 'raises error for invalid data' do
+    it 'creates user even with invalid email since validation is skipped' do
+      user = UserCreationService.create_user(
+        email: 'invalid-email',
+        name: 'Test User'
+      )
+
+      expect(user).to be_persisted
+      expect(user.email).to eq('invalid-email')
+      expect(user.name).to eq('Test User')
+    end
+
+    it 'raises error for database constraint violations' do
+      UserCreationService.create_user(email: 'test@example.com', name: 'First User')
+
       expect {
         UserCreationService.create_user(
-          email: 'invalid-email',
-          name: ''
+          email: 'test@example.com',
+          name: 'Second User'
         )
-      }.to raise_error(ActiveRecord::RecordInvalid)
+      }.to raise_error(ActiveRecord::RecordNotUnique)
     end
   end
 

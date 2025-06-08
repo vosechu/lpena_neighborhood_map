@@ -23,32 +23,32 @@
           </div>
           <div class="ml-3">
             <p class="text-sm text-green-700">
-              <strong>Success!</strong> You have been opted out of email notifications.
+              <strong>Success!</strong> You have been removed from the neighborhood directory.
             </p>
           </div>
         </div>
       </div>
-      
-      <h1 class="text-2xl font-bold text-gray-900 mb-4">You're All Set</h1>
+
+      <h1 class="text-2xl font-bold text-gray-900 mb-4">You're Hidden from the Directory</h1>
       <p class="text-gray-600 mb-6">
-        You will no longer receive email notifications when your information is updated in the neighborhood directory.
+        Your information is no longer visible in the neighborhood directory or map.
       </p>
       <p class="text-sm text-gray-500">
-        If you change your mind in the future, please contact us and we can re-enable notifications for you.
+        If you change your mind in the future, please contact vosechu@gmail.com and we can make you visible again.
       </p>
-      
+
     <% elsif @resident %>
-      <h1 class="text-2xl font-bold text-gray-900 mb-4">Opt Out of Email Notifications</h1>
-      
+      <h1 class="text-2xl font-bold text-gray-900 mb-4">Remove from Neighborhood Directory</h1>
+
       <p class="text-gray-600 mb-6">
         Hello <strong><%= @resident.display_name.presence || @resident.official_name %></strong>,
       </p>
-      
+
       <p class="text-gray-600 mb-6">
-        You're receiving email notifications when your information is updated in our neighborhood directory. 
-        If you'd prefer not to receive these notifications, you can opt out below.
+        You're currently listed in our neighborhood directory. If you'd prefer not to be included,
+        you can remove yourself below.
       </p>
-      
+
       <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
         <div class="flex">
           <div class="flex-shrink-0">
@@ -58,22 +58,22 @@
           </div>
           <div class="ml-3">
             <p class="text-sm text-yellow-700">
-              <strong>Note:</strong> Opting out will prevent you from being notified about future changes to your information.
-              You'll still appear in the neighborhood directory, but won't receive email updates.
+              <strong>Note:</strong> This will hide your information from the neighborhood map and directory.
+              You'll stop receiving notification emails about changes to your information.
             </p>
           </div>
         </div>
       </div>
-      
+
       <%= form_with url: opt_out_path(params[:token]), method: :post, local: true, class: "space-y-4" do |f| %>
         <div class="flex items-center justify-between">
-          <%= f.submit "Opt Out of Email Notifications", 
+          <%= f.submit "Remove Me from Directory",
                 class: "bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" %>
         </div>
       <% end %>
-      
+
       <p class="text-xs text-gray-500 mt-6">
-        If you have any questions, please contact us directly.
+        If you have any questions, please contact vosechu@gmail.com.
       </p>
     <% end %>
   </div>

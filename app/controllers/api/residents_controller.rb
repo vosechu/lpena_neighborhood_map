@@ -12,9 +12,17 @@ class Api::ResidentsController < ApplicationController
   end
 
   def update
-    if ResidentUpdateService.update_resident(@resident, resident_params, current_user)
+    # Log the update attempt for audit purposes
+    Rails.logger.info "User #{current_user.id} (#{current_user.email}) updating resident #{@resident.id}"
+
+    if ResidentUpdateService.update_resident(@resident, resident_params)
+      # Log successful update with changed fields
+      changed_fields = @resident.previous_changes.keys
+      Rails.logger.info "User #{current_user.id} successfully updated resident #{@resident.id}. Changed fields: #{changed_fields.join(', ')}"
+
       render json: @resident
     else
+      Rails.logger.warn "User #{current_user.id} failed to update resident #{@resident.id}: #{@resident.errors.full_messages}"
       render json: @resident.errors, status: :unprocessable_entity
     end
   end

@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe OptOutsController, type: :request do
-  let(:resident) { create(:resident, email: 'test@example.com') }
+  let(:resident) { create(:resident, email: 'test@example.com', hidden: false) }
   let(:token_data) { { resident_id: resident.id, expires_at: 30.days.from_now.to_s } }
   let(:valid_token) { Rails.application.message_verifier(:opt_out).generate(token_data) }
   let(:expired_token_data) { { resident_id: resident.id, expires_at: 1.day.ago.to_s } }
@@ -13,7 +13,7 @@ RSpec.describe OptOutsController, type: :request do
       it 'shows the opt-out page' do
         get opt_out_path(valid_token)
         expect(response).to have_http_status(:success)
-        expect(response.body).to include('Opt Out of Email Notifications')
+        expect(response.body).to include('Remove from Neighborhood Directory')
         expect(response.body).to include(resident.display_name.presence || resident.official_name)
       end
     end
@@ -23,6 +23,7 @@ RSpec.describe OptOutsController, type: :request do
         get opt_out_path(expired_token)
         expect(response).to have_http_status(:success)
         expect(response.body).to include('This opt-out link has expired')
+        expect(response.body).to include('vosechu@gmail.com')
       end
     end
 
@@ -31,6 +32,7 @@ RSpec.describe OptOutsController, type: :request do
         get opt_out_path(invalid_token)
         expect(response).to have_http_status(:success)
         expect(response.body).to include('Invalid opt-out link')
+        expect(response.body).to include('vosechu@gmail.com')
       end
     end
 
@@ -41,6 +43,7 @@ RSpec.describe OptOutsController, type: :request do
         get opt_out_path(invalid_resident_token)
         expect(response).to have_http_status(:success)
         expect(response.body).to include('Resident not found')
+        expect(response.body).to include('vosechu@gmail.com')
       end
     end
   end
@@ -50,11 +53,11 @@ RSpec.describe OptOutsController, type: :request do
       it 'opts out the resident and shows success message' do
         expect {
           post opt_out_path(valid_token)
-        }.to change { resident.reload.email_notifications_opted_out }.from(false).to(true)
+        }.to change { resident.reload.hidden }.from(false).to(true)
 
         expect(response).to have_http_status(:success)
         expect(response.body).to include('Success!')
-        expect(response.body).to include('You have been opted out')
+        expect(response.body).to include('You have been removed from the neighborhood directory')
       end
     end
 
@@ -62,7 +65,7 @@ RSpec.describe OptOutsController, type: :request do
       it 'shows error message and does not opt out' do
         expect {
           post opt_out_path(expired_token)
-        }.not_to change { resident.reload.email_notifications_opted_out }
+        }.not_to change { resident.reload.hidden }
 
         expect(response).to have_http_status(:success)
         expect(response.body).to include('This opt-out link has expired')
@@ -73,7 +76,7 @@ RSpec.describe OptOutsController, type: :request do
       it 'shows error message and does not opt out' do
         expect {
           post opt_out_path(invalid_token)
-        }.not_to change { resident.reload.email_notifications_opted_out }
+        }.not_to change { resident.reload.hidden }
 
         expect(response).to have_http_status(:success)
         expect(response.body).to include('Invalid opt-out link')

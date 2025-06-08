@@ -7,7 +7,7 @@ class OptOutsController < ApplicationController
   end
 
   def create
-    if @resident.update(email_notifications_opted_out: true)
+    if @resident.update(hidden: true)
       @success = true
       render :show
     else
@@ -24,16 +24,16 @@ class OptOutsController < ApplicationController
 
       # Check if token is expired
       if token_data['expires_at'] && Time.parse(token_data['expires_at']) < Time.current
-        @error = 'This opt-out link has expired. Please contact us directly.'
+        @error = 'This opt-out link has expired. Please contact vosechu@gmail.com for assistance.'
         render :show and return
       end
 
       @resident = Resident.find(token_data['resident_id'])
     rescue ActiveSupport::MessageVerifier::InvalidSignature
-      @error = 'Invalid opt-out link. Please contact us directly.'
+      @error = 'Invalid opt-out link. Please contact vosechu@gmail.com for assistance.'
       render :show and return
     rescue ActiveRecord::RecordNotFound
-      @error = 'Resident not found. Please contact us directly.'
+      @error = 'Resident not found. Please contact vosechu@gmail.com for assistance.'
       render :show and return
     end
   end

@@ -2,36 +2,34 @@ require 'rails_helper'
 
 RSpec.describe ResidentMailer, type: :mailer do
   let(:user) { create(:user, name: 'Test User', email: 'user@example.com') }
-  let(:invited_by_user) { create(:user, name: 'Inviter User', email: 'inviter@example.com') }
   let(:resident) { create(:resident, display_name: 'Test Resident', email: 'resident@example.com', phone: '555-1234') }
 
   describe '#welcome_new_user' do
-    let(:mail) { ResidentMailer.welcome_new_user(resident, user, invited_by_user) }
+    let(:mail) { ResidentMailer.welcome_new_user(resident, user) }
 
     it 'renders the headers' do
-      expect(mail.subject).to eq("Welcome to the Neighborhood Map - You've been added by #{invited_by_user.name}")
+      expect(mail.subject).to eq("Welcome to the Neighborhood Directory - Set up your account")
       expect(mail.to).to eq([ user.email ])
       expect(mail.from).to eq([ 'noreply@neighborhoodmap.local' ])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to include('Welcome to the Neighborhood Map!')
+      expect(mail.body.encoded).to include('Welcome to the Neighborhood Directory!')
       expect(mail.body.encoded).to include(user.name)
-      expect(mail.body.encoded).to include(invited_by_user.name)
       expect(mail.body.encoded).to include(resident.display_name)
       expect(mail.body.encoded).to include('Set Up Your Account')
     end
 
     it 'includes resident information' do
       expect(mail.body.encoded).to include(resident.phone) if resident.phone.present?
-      expect(mail.body.encoded).to include('Privacy & Opt-Out')
+      expect(mail.body.encoded).to include('Privacy & Control')
     end
 
     it 'includes login token in URL' do
       # Mock the token generation
       allow(UserCreationService).to receive(:generate_initial_login_token).with(user).and_return('test-token')
 
-      mail = ResidentMailer.welcome_new_user(resident, user, invited_by_user)
+      mail = ResidentMailer.welcome_new_user(resident, user)
       expect(mail.body.encoded).to include('test-token')
     end
   end
@@ -43,8 +41,7 @@ RSpec.describe ResidentMailer, type: :mailer do
         'phone' => { from: '555-0000', to: '555-1234' }
       }
     end
-    let(:updated_by_user) { create(:user, name: 'Updater User', email: 'updater@example.com') }
-    let(:mail) { ResidentMailer.data_change_notification(resident, changes, updated_by_user) }
+    let(:mail) { ResidentMailer.data_change_notification(resident, changes) }
 
     it 'renders the headers' do
       expect(mail.subject).to eq('Your neighborhood information has been updated')
@@ -53,9 +50,8 @@ RSpec.describe ResidentMailer, type: :mailer do
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to include('Your Neighborhood Information Has Been Updated')
+      expect(mail.body.encoded).to include('Your neighborhood information has been updated')
       expect(mail.body.encoded).to include(resident.display_name)
-      expect(mail.body.encoded).to include(updated_by_user.name)
     end
 
     it 'includes change details' do
@@ -67,19 +63,18 @@ RSpec.describe ResidentMailer, type: :mailer do
       expect(mail.body.encoded).to include('555-1234')
     end
 
-    it 'includes current information' do
-      expect(mail.body.encoded).to include('Your Current Information')
-      expect(mail.body.encoded).to include(resident.email)
+    it 'includes correcting information' do
+      expect(mail.body.encoded).to include('Correcting or hiding information')
+      expect(mail.body.encoded).to include('vosechu@gmail.com')
     end
 
     it 'includes opt-out link' do
-      expect(mail.body.encoded).to include('Opt out of future notifications')
+      expect(mail.body.encoded).to include('Remove me from the directory')
       expect(mail.body.encoded).to include('/opt-out/')
     end
 
-    it 'includes updater information' do
-      expect(mail.body.encoded).to include(updated_by_user.name)
-      expect(mail.body.encoded).to include(updated_by_user.email)
+    it 'includes community message' do
+      expect(mail.body.encoded).to include('run by neighbors, for neighbors')
     end
   end
 
