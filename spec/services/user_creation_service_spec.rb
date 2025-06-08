@@ -42,7 +42,7 @@ RSpec.describe UserCreationService, type: :service do
 
     it 'generates a password reset token' do
       token = UserCreationService.generate_initial_login_token(user)
-      
+
       expect(token).to be_present
       user.reload
       expect(user.reset_password_token).to be_present

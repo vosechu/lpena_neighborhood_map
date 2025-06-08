@@ -2,7 +2,7 @@ class UserCreationService
   def self.create_user(email:, name:, role: 'user', send_invitation: true)
     # Generate a random password
     password = SecureRandom.alphanumeric(12)
-    
+
     user = User.create!(
       email: email,
       name: name,

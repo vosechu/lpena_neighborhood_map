@@ -83,7 +83,7 @@ RSpec.describe OptOutsController, type: :request do
     context 'when update fails' do
       it 'shows error message' do
         allow_any_instance_of(Resident).to receive(:update).and_return(false)
-        
+
         post opt_out_path(valid_token)
         expect(response).to have_http_status(:success)
         expect(response.body).to include('Unable to process opt-out request')

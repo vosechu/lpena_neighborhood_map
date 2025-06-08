@@ -1,5 +1,5 @@
 class Api::ResidentsController < ApplicationController
-  before_action :set_resident, only: [:show, :update]
+  before_action :set_resident, only: [ :show, :update ]
   before_action :authorize_resource
 
   def index

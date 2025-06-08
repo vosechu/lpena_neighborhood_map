@@ -7,7 +7,7 @@ class ResidentMailer < ApplicationMailer
     @invited_by_user = invited_by_user
     @login_token = UserCreationService.generate_initial_login_token(@user)
     @login_url = edit_user_password_url(reset_password_token: @login_token)
-    
+
     mail(
       to: @user.email,
       subject: "Welcome to the Neighborhood Map - You've been added by #{@invited_by_user.name}"
@@ -19,10 +19,10 @@ class ResidentMailer < ApplicationMailer
     @changes = changes
     @updated_by_user = updated_by_user
     @opt_out_url = opt_out_url(token: generate_opt_out_token(@resident))
-    
+
     mail(
       to: @resident.email,
-      subject: "Your neighborhood information has been updated"
+      subject: 'Your neighborhood information has been updated'
     )
   end
 

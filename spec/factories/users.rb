@@ -12,6 +12,6 @@ FactoryBot.define do
       sequence(:name) { |n| "Admin #{n}" }
     end
 
-    factory :admin_user, traits: [:admin]
+    factory :admin_user, traits: [ :admin ]
   end
 end

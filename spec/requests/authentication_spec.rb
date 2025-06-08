@@ -79,7 +79,7 @@ RSpec.describe 'Authentication', type: :request do
     it 'allows password reset request' do
       post user_password_path, params: { user: { email: user.email } }
       expect(response).to redirect_to(new_user_session_path)
-      
+
       # Check that reset token was set
       user.reload
       expect(user.reset_password_token).to be_present

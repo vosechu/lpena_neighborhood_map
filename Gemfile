@@ -88,4 +88,4 @@ end
 
 gem 'importmap-rails', '~> 2.1'
 gem 'stimulus-rails', '~> 1.3'
-gem "cssbundling-rails"
+gem 'cssbundling-rails'

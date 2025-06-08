@@ -11,7 +11,7 @@ class OptOutsController < ApplicationController
       @success = true
       render :show
     else
-      @error = "Unable to process opt-out request. Please try again."
+      @error = 'Unable to process opt-out request. Please try again.'
       render :show
     end
   end
@@ -21,19 +21,19 @@ class OptOutsController < ApplicationController
   def verify_token
     begin
       token_data = Rails.application.message_verifier(:opt_out).verify(params[:token])
-      
+
       # Check if token is expired
       if token_data['expires_at'] && Time.parse(token_data['expires_at']) < Time.current
-        @error = "This opt-out link has expired. Please contact us directly."
+        @error = 'This opt-out link has expired. Please contact us directly.'
         render :show and return
       end
-      
+
       @resident = Resident.find(token_data['resident_id'])
     rescue ActiveSupport::MessageVerifier::InvalidSignature
-      @error = "Invalid opt-out link. Please contact us directly."
+      @error = 'Invalid opt-out link. Please contact us directly.'
       render :show and return
     rescue ActiveRecord::RecordNotFound
-      @error = "Resident not found. Please contact us directly."
+      @error = 'Resident not found. Please contact us directly.'
       render :show and return
     end
   end

@@ -10,8 +10,8 @@ RSpec.describe ResidentMailer, type: :mailer do
 
     it 'renders the headers' do
       expect(mail.subject).to eq("Welcome to the Neighborhood Map - You've been added by #{invited_by_user.name}")
-      expect(mail.to).to eq([user.email])
-      expect(mail.from).to eq(['noreply@neighborhoodmap.local'])
+      expect(mail.to).to eq([ user.email ])
+      expect(mail.from).to eq([ 'noreply@neighborhoodmap.local' ])
     end
 
     it 'renders the body' do
@@ -30,7 +30,7 @@ RSpec.describe ResidentMailer, type: :mailer do
     it 'includes login token in URL' do
       # Mock the token generation
       allow(UserCreationService).to receive(:generate_initial_login_token).with(user).and_return('test-token')
-      
+
       mail = ResidentMailer.welcome_new_user(resident, user, invited_by_user)
       expect(mail.body.encoded).to include('test-token')
     end
@@ -48,8 +48,8 @@ RSpec.describe ResidentMailer, type: :mailer do
 
     it 'renders the headers' do
       expect(mail.subject).to eq('Your neighborhood information has been updated')
-      expect(mail.to).to eq([resident.email])
-      expect(mail.from).to eq(['noreply@neighborhoodmap.local'])
+      expect(mail.to).to eq([ resident.email ])
+      expect(mail.from).to eq([ 'noreply@neighborhoodmap.local' ])
     end
 
     it 'renders the body' do
@@ -87,9 +87,9 @@ RSpec.describe ResidentMailer, type: :mailer do
     it 'generates a valid token' do
       mailer = ResidentMailer.new
       token = mailer.send(:generate_opt_out_token, resident)
-      
+
       expect(token).to be_present
-      
+
       # Verify token can be decoded
       decoded = Rails.application.message_verifier(:opt_out).verify(token)
       expect(decoded['resident_id']).to eq(resident.id)

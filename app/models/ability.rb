@@ -19,7 +19,7 @@ class Ability
       can :manage, Resident
       can :read, House
       can :manage, House
-      
+
       # Users can only read and update their own user record
       can :read, User, id: user.id
       can :update, User, id: user.id

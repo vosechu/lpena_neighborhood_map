@@ -3,7 +3,7 @@ require 'sidekiq-scheduler/web'
 
 Rails.application.routes.draw do
   # Authentication - disable registration for closed site
-  devise_for :users, skip: [:registrations]
+  devise_for :users, skip: [ :registrations ]
 
   # Admin interface
   mount RailsAdmin::Engine => '/admin', as: 'rails_admin'
@@ -36,7 +36,7 @@ Rails.application.routes.draw do
   else
     # In production, protect Sidekiq with authentication
     Sidekiq::Web.use(Rack::Auth::Basic) do |user, password|
-      [user, password] == ['admin', ENV['SIDEKIQ_PASSWORD']]
+      [ user, password ] == [ 'admin', ENV['SIDEKIQ_PASSWORD'] ]
     end
     mount Sidekiq::Web => '/sidekiq'
   end
