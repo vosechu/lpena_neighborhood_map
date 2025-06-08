@@ -1,34 +1,36 @@
 require 'rails_helper'
 
 RSpec.describe ResidentUpdateService, type: :service do
-  let(:user) { create(:user, email: 'test-user@example.com') }
-  let(:resident) { create(:resident, :without_email) }
-
   describe '.update_resident' do
+    let(:updating_user) { create(:user, email: 'updater@example.com') }
+    
     context 'when updating basic information' do
+      let(:resident) { create(:resident, :without_email) }
       let(:params) { { display_name: 'Updated Name' } }
 
       it 'updates the resident successfully' do
-        expect(ResidentUpdateService.update_resident(resident, params, user)).to be true
+        expect(ResidentUpdateService.update_resident(resident, params, updating_user)).to be true
         expect(resident.reload.display_name).to eq('Updated Name')
       end
 
       it 'returns false if update fails' do
         allow(resident).to receive(:update).and_return(false)
-        expect(ResidentUpdateService.update_resident(resident, params, user)).to be false
+        expect(ResidentUpdateService.update_resident(resident, params, updating_user)).to be false
       end
     end
 
     context 'when adding an email to a resident' do
+      let(:resident) { create(:resident, :without_email) }
       let(:params) { { email: 'new@example.com' } }
 
       it 'creates a new user for the resident' do
-        initial_count = User.count
+        initial_user_count = User.count
         
-        expect {
-          ResidentUpdateService.update_resident(resident, params, user)
-        }.to change(User, :count).by(1)
-
+        result = ResidentUpdateService.update_resident(resident, params, updating_user)
+        
+        expect(result).to be true
+        expect(User.count).to eq(initial_user_count + 1) # Only one new user should be created
+        
         new_user = User.find_by(email: 'new@example.com')
         expect(new_user).to be_present
         expect(new_user.name).to eq(resident.display_name)
@@ -36,10 +38,9 @@ RSpec.describe ResidentUpdateService, type: :service do
       end
 
       it 'sends a welcome email' do
-        # Mock the email delivery
         allow(ResidentMailer).to receive(:welcome_new_user).and_return(double(deliver_later: true))
         
-        ResidentUpdateService.update_resident(resident, params, user)
+        ResidentUpdateService.update_resident(resident, params, updating_user)
         
         expect(ResidentMailer).to have_received(:welcome_new_user)
       end
@@ -47,22 +48,24 @@ RSpec.describe ResidentUpdateService, type: :service do
       it 'links existing user if email already exists' do
         existing_user = create(:user, email: 'existing@example.com', name: 'Existing User')
         params = { email: 'existing@example.com' }
-        initial_count = User.count
+        initial_user_count = User.count
 
-        expect {
-          ResidentUpdateService.update_resident(resident, params, user)
-        }.not_to change(User, :count)
-
+        result = ResidentUpdateService.update_resident(resident, params, updating_user)
+        
+        expect(result).to be true
+        expect(User.count).to eq(initial_user_count) # No new users created
         expect(resident.reload.user).to eq(existing_user)
       end
 
       it 'does not create user if email is blank' do
         params = { email: '' }
-        initial_count = User.count
+        initial_user_count = User.count
         
-        expect {
-          ResidentUpdateService.update_resident(resident, params, user)
-        }.not_to change(User, :count)
+        result = ResidentUpdateService.update_resident(resident, params, updating_user)
+        
+        expect(result).to be true
+        expect(User.count).to eq(initial_user_count) # No new users created
+        expect(resident.reload.user).to be_nil
       end
     end
 
@@ -71,47 +74,54 @@ RSpec.describe ResidentUpdateService, type: :service do
       let(:params) { { display_name: 'Updated Name' } }
 
       it 'sends change notification email' do
-        # Mock the email delivery
         allow(ResidentMailer).to receive(:data_change_notification).and_return(double(deliver_later: true))
 
-        ResidentUpdateService.update_resident(resident_with_email, params, user)
+        ResidentUpdateService.update_resident(resident_with_email, params, updating_user)
         
         expect(ResidentMailer).to have_received(:data_change_notification).with(
           resident_with_email,
           hash_including('display_name' => hash_including(from: 'Original Name', to: 'Updated Name')),
-          user
+          updating_user
         )
       end
 
       it 'does not send email if resident has no email' do
+        resident_no_email = create(:resident, :without_email)
         allow(ResidentMailer).to receive(:data_change_notification)
-        ResidentUpdateService.update_resident(resident, params, user)
+        
+        ResidentUpdateService.update_resident(resident_no_email, params, updating_user)
+        
         expect(ResidentMailer).not_to have_received(:data_change_notification)
       end
 
       it 'does not send email if resident opted out' do
         resident_with_email.update(email_notifications_opted_out: true)
         allow(ResidentMailer).to receive(:data_change_notification)
-        ResidentUpdateService.update_resident(resident_with_email, params, user)
+        
+        ResidentUpdateService.update_resident(resident_with_email, params, updating_user)
+        
         expect(ResidentMailer).not_to have_received(:data_change_notification)
       end
 
       it 'does not send email if no displayable fields changed' do
         params = { official_name: 'Different Official Name' } # Non-displayable field
         allow(ResidentMailer).to receive(:data_change_notification)
-        ResidentUpdateService.update_resident(resident_with_email, params, user)
+        
+        ResidentUpdateService.update_resident(resident_with_email, params, updating_user)
+        
         expect(ResidentMailer).not_to have_received(:data_change_notification)
       end
     end
 
     context 'when both adding email and updating data' do
+      let(:resident) { create(:resident, :without_email) }
       let(:params) { { email: 'new@example.com', display_name: 'Updated Name' } }
 
       it 'creates user and sends welcome email, but not change notification' do
         allow(ResidentMailer).to receive(:welcome_new_user).and_return(double(deliver_later: true))
         allow(ResidentMailer).to receive(:data_change_notification)
 
-        ResidentUpdateService.update_resident(resident, params, user)
+        ResidentUpdateService.update_resident(resident, params, updating_user)
         
         expect(ResidentMailer).to have_received(:welcome_new_user)
         expect(ResidentMailer).not_to have_received(:data_change_notification)
