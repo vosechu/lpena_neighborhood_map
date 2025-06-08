@@ -32,6 +32,36 @@ RSpec.describe 'Api::ResidentsController', type: :request do
     end
   end
 
+  describe 'POST /api/houses/:house_id/residents' do
+    let!(:real_house) { create(:house) }
+    let(:valid_params) { { resident: { official_name: 'John Doe', display_name: 'John' } } }
+    let(:invalid_params) { { resident: { display_name: 'John' } } }
+
+    context 'with valid params' do
+      it 'creates a new resident and returns JSON' do
+        expect {
+          post "/api/houses/#{real_house.id}/residents", params: valid_params
+        }.to change(Resident, :count).by(1)
+        
+        expect(response).to have_http_status(:created)
+        
+        json_response = JSON.parse(response.body)
+        expect(json_response).to include('official_name' => 'John Doe')
+        expect(json_response).to include('display_name' => 'John')
+      end
+    end
+
+    context 'with invalid params' do
+      it 'returns errors and unprocessable_entity status' do
+        post "/api/houses/#{real_house.id}/residents", params: invalid_params
+        expect(response).to have_http_status(:unprocessable_entity)
+        
+        json_response = JSON.parse(response.body)
+        expect(json_response).to have_key('official_name')
+      end
+    end
+  end
+
   describe 'PATCH /api/residents/:id' do
     let!(:real_house) { create(:house) }
     let!(:real_resident) { create(:resident, :without_email, house: real_house) }
@@ -89,6 +119,67 @@ RSpec.describe 'Api::ResidentsController', type: :request do
 
         patch "/api/residents/#{real_resident.id}", params: invalid_params
         expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
+
+  describe 'DELETE /api/residents/:id' do
+    let!(:real_house) { create(:house) }
+    
+    context 'when resident is user-created' do
+      let!(:user_created_resident) { create(:resident, house: real_house, last_import_at: nil) }
+
+      it 'deletes the resident and returns success message' do
+        expect {
+          delete "/api/residents/#{user_created_resident.id}"
+        }.to change(Resident, :count).by(-1)
+        
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)).to eq({ 'message' => 'Resident deleted successfully' })
+      end
+    end
+
+    context 'when resident is from official records' do
+      let!(:official_resident) { create(:resident, house: real_house, last_import_at: 1.day.ago) }
+
+      it 'returns forbidden status' do
+        delete "/api/residents/#{official_resident.id}"
+        expect(response).to have_http_status(:forbidden)
+        expect(JSON.parse(response.body)).to eq({ 'error' => 'Cannot delete residents from official records' })
+      end
+    end
+  end
+
+  describe 'PATCH /api/residents/:id/hide' do
+    let!(:real_house) { create(:house) }
+    let!(:real_resident) { create(:resident, house: real_house) }
+
+    context 'when update succeeds' do
+      it 'hides the resident and returns success message' do
+        patch "/api/residents/#{real_resident.id}/hide"
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)).to eq({ 'message' => 'Resident hidden successfully' })
+        
+        real_resident.reload
+        expect(real_resident.hidden).to be true
+      end
+    end
+  end
+
+  describe 'PATCH /api/residents/:id/unhide' do
+    let!(:real_house) { create(:house) }
+    let!(:real_resident) { create(:resident, house: real_house, hidden: true) }
+
+    context 'when update succeeds' do
+      it 'unhides the resident and returns JSON' do
+        patch "/api/residents/#{real_resident.id}/unhide"
+        expect(response).to have_http_status(:ok)
+        
+        json_response = JSON.parse(response.body)
+        expect(json_response).to include('id' => real_resident.id)
+        
+        real_resident.reload
+        expect(real_resident.hidden).to be false
       end
     end
   end

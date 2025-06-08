@@ -13,8 +13,15 @@ Rails.application.routes.draw do
   post '/opt-out/:token', to: 'opt_outs#create'
 
   namespace :api do
-    resources :houses
-    resources :residents
+    resources :houses do
+      resources :residents, only: [:create]
+    end
+    resources :residents do
+      member do
+        patch :hide
+        patch :unhide
+      end
+    end
   end
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

@@ -22,13 +22,23 @@ class Resident < ApplicationRecord
   validates :birthdate, comparison: { less_than: -> { Date.current } }, allow_nil: true
 
   # Privacy settings - now using hide_* fields (DB default is false)
-  # attribute :hide_email, :boolean
-  # attribute :hide_phone, :boolean
-  # attribute :hide_birthdate, :boolean
-  # attribute :hide_display_name, :boolean
+  attribute :hide_email, :boolean, default: false
+  attribute :hide_phone, :boolean, default: false
+  attribute :hide_birthdate, :boolean, default: false
+  attribute :hide_display_name, :boolean, default: false
 
   # Scopes
   scope :current, -> { where(last_seen_at: nil).where('hidden IS NOT TRUE') }
   # Only residents that are not hidden
   scope :visible, -> { where('hidden IS NOT TRUE') }
+
+  # Check if resident is hidden
+  def hidden?
+    hidden == true
+  end
+
+  # Check if this is a user-created resident (not from official records)
+  def user_created?
+    last_import_at.nil?
+  end
 end
