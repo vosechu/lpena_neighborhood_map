@@ -1,4 +1,6 @@
 class House < ApplicationRecord
+  include Auditable
+  
   has_many :residents
   has_many :users, through: :residents
 

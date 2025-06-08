@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Resident < ApplicationRecord
+  include Auditable
+  
   belongs_to :house
   belongs_to :user, optional: true
 
@@ -31,4 +33,9 @@ class Resident < ApplicationRecord
   scope :current, -> { where(last_seen_at: nil).where('hidden IS NOT TRUE') }
   # Only residents that are not hidden
   scope :visible, -> { where('hidden IS NOT TRUE') }
+  
+  def hide!
+    update!(hidden: true)
+    log_hide
+  end
 end

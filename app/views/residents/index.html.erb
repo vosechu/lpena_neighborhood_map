@@ -1,0 +1,249 @@
+<% content_for :title, "Resident Management" %>
+
+<div data-controller="residents-management" class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+      <div class="flex-1 min-w-0">
+        <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          Resident Management
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">
+          Manage resident information, view orphaned residents, and track changes
+        </p>
+      </div>
+      <div class="mt-4 flex md:mt-0 md:ml-4">
+        <button data-action="click->residents-management#showAddResidentModal" 
+                class="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+          Add Resident
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white shadow rounded-lg mb-6">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4">
+          
+          <!-- Search -->
+          <div class="flex-1 min-w-0">
+            <div class="relative rounded-md shadow-sm">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <input data-residents-management-target="searchInput"
+                     data-action="input->residents-management#search"
+                     type="text" 
+                     placeholder="Search residents by name..."
+                     class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md">
+            </div>
+          </div>
+
+          <!-- Filter Buttons -->
+          <div class="flex space-x-2">
+            <button data-action="click->residents-management#showAllResidents"
+                    data-residents-management-target="allResidentsBtn"
+                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              All Residents
+            </button>
+            <button data-action="click->residents-management#showOrphanedResidents"
+                    data-residents-management-target="orphanedBtn"
+                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              Orphaned Residents
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Residents Table -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-md">
+      <div data-residents-management-target="loadingState" class="hidden">
+        <div class="px-6 py-8 text-center">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p class="mt-2 text-sm text-gray-500">Loading residents...</p>
+        </div>
+      </div>
+
+      <div data-residents-management-target="emptyState" class="hidden">
+        <div class="px-6 py-8 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No residents found</h3>
+          <p class="mt-1 text-sm text-gray-500">Get started by adding a new resident.</p>
+        </div>
+      </div>
+
+      <ul data-residents-management-target="residentsList" class="divide-y divide-gray-200">
+        <!-- Residents will be populated here by JavaScript -->
+      </ul>
+    </div>
+  </div>
+
+  <!-- Add/Edit Resident Modal -->
+  <div data-residents-management-target="modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" data-action="click->residents-management#closeModal"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <form data-residents-management-target="residentForm" data-action="submit->residents-management#saveResident">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="w-full mt-3 text-center sm:mt-0 sm:text-left">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" data-residents-management-target="modalTitle">
+                  Add New Resident
+                </h3>
+                
+                <div class="mt-6 space-y-4">
+                  <div>
+                    <label for="display_name" class="block text-sm font-medium text-gray-700">Display Name</label>
+                    <input type="text" name="display_name" id="display_name" required
+                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                  </div>
+
+                  <div>
+                    <label for="official_name" class="block text-sm font-medium text-gray-700">Official Name</label>
+                    <input type="text" name="official_name" id="official_name" required
+                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                  </div>
+
+                  <div>
+                    <label for="house_id" class="block text-sm font-medium text-gray-700">House</label>
+                    <select name="house_id" id="house_id" data-residents-management-target="houseSelect"
+                            class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                      <option value="">Select a house (optional)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" name="email" id="email"
+                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                  </div>
+
+                  <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                    <input type="tel" name="phone" id="phone"
+                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                  </div>
+
+                  <div>
+                    <label for="birthdate" class="block text-sm font-medium text-gray-700">Birthdate</label>
+                    <input type="date" name="birthdate" id="birthdate"
+                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                  </div>
+
+                  <div>
+                    <label for="homepage" class="block text-sm font-medium text-gray-700">Homepage</label>
+                    <input type="url" name="homepage" id="homepage"
+                           class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                  </div>
+
+                  <div>
+                    <label for="skills" class="block text-sm font-medium text-gray-700">Skills</label>
+                    <textarea name="skills" id="skills" rows="3"
+                              class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"></textarea>
+                  </div>
+
+                  <div>
+                    <label for="comments" class="block text-sm font-medium text-gray-700">Comments</label>
+                    <textarea name="comments" id="comments" rows="3"
+                              class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"></textarea>
+                  </div>
+
+                  <!-- Privacy Controls -->
+                  <div class="border-t pt-4">
+                    <h4 class="text-sm font-medium text-gray-900 mb-3">Privacy Settings</h4>
+                    <div class="space-y-2">
+                      <div class="flex items-center">
+                        <input type="checkbox" name="hide_display_name" id="hide_display_name"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="hide_display_name" class="ml-2 block text-sm text-gray-700">Hide display name</label>
+                      </div>
+                      <div class="flex items-center">
+                        <input type="checkbox" name="hide_email" id="hide_email"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="hide_email" class="ml-2 block text-sm text-gray-700">Hide email</label>
+                      </div>
+                      <div class="flex items-center">
+                        <input type="checkbox" name="hide_phone" id="hide_phone"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="hide_phone" class="ml-2 block text-sm text-gray-700">Hide phone</label>
+                      </div>
+                      <div class="flex items-center">
+                        <input type="checkbox" name="hide_birthdate" id="hide_birthdate"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="hide_birthdate" class="ml-2 block text-sm text-gray-700">Hide birthdate</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button type="submit"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+              Save Resident
+            </button>
+            <button type="button" data-action="click->residents-management#closeModal"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit History Modal -->
+  <div data-residents-management-target="auditModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="audit-modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" data-action="click->residents-management#closeAuditModal"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="w-full mt-3 text-center sm:mt-0 sm:text-left">
+              <h3 class="text-lg leading-6 font-medium text-gray-900" id="audit-modal-title">
+                Audit History
+              </h3>
+              
+              <div class="mt-6">
+                <div data-residents-management-target="auditLoadingState" class="hidden text-center py-8">
+                  <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <p class="mt-2 text-sm text-gray-500">Loading audit history...</p>
+                </div>
+
+                <div data-residents-management-target="auditEmptyState" class="hidden text-center py-8">
+                  <p class="text-sm text-gray-500">No audit history found for this resident.</p>
+                </div>
+
+                <div data-residents-management-target="auditList" class="space-y-4 max-h-96 overflow-y-auto">
+                  <!-- Audit logs will be populated here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" data-action="click->residents-management#closeAuditModal"
+                  class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

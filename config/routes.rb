@@ -14,8 +14,16 @@ Rails.application.routes.draw do
 
   namespace :api do
     resources :houses
-    resources :residents
+    resources :residents do
+      member do
+        patch :hide
+      end
+    end
+    resources :audit_logs, only: [:index, :show]
   end
+
+  # Resident Management UI
+  resources :residents, only: [:index]
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

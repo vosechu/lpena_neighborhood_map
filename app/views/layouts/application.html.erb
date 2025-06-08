@@ -26,6 +26,31 @@
   </head>
 
   <body>
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex">
+            <div class="flex-shrink-0 flex items-center">
+              <%= link_to root_path, class: "text-xl font-semibold text-gray-900" do %>
+                Neighborhood Map
+              <% end %>
+            </div>
+            <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <%= link_to root_path, 
+                  class: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm #{'border-blue-500 text-gray-900' if request.path == '/'}" do %>
+                Map View
+              <% end %>
+              <%= link_to residents_path, 
+                  class: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm #{'border-blue-500 text-gray-900' if request.path.start_with?('/residents')}" do %>
+                Manage Residents
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
     <main>
       <%= yield %>
     </main>
