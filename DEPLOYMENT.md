@@ -2,10 +2,16 @@
 
 ## Quick Start
 
-Here's your generated Rails secret key for production:
+**Generate your Rails secret key for production:**
+```bash
+# Generate a new secret key (run this locally, don't commit the output)
+bundle exec rails secret
+
+# Set it as an environment variable in production (never commit this!)
+export SECRET_KEY_BASE="your_generated_secret_here"
 ```
-SECRET_KEY_BASE="f8e7d6c5b4a3928170f6e5d4c3b2a19807f6e5d4c3b2a19068574b3a29180706e5d4c3b2a19078950b6e5d4c3b2a19087654b3a29180706e5d4"
-```
+
+⚠️ **NEVER commit secret keys to version control!**
 
 **Usage:**
 ```bash
@@ -39,8 +45,19 @@ Example workflow:
 # Generate a new secret key
 bundle exec rails secret
 
-# Set in production environment
+# Set in production environment (NEVER commit this to git!)
 export SECRET_KEY_BASE="your_generated_secret_here"
+```
+
+**Alternative: Use Rails Encrypted Credentials**
+```bash
+# Edit encrypted credentials (recommended for production)
+EDITOR="nano" rails credentials:edit
+
+# Add to the file:
+# secret_key_base: your_secret_here
+
+# Rails will automatically use this in production
 ```
 
 ### 2. Create First Admin User
@@ -61,8 +78,8 @@ rails admin:list
 Set these environment variables in production:
 
 ```bash
-# Required
-SECRET_KEY_BASE="f8e7d6c5b4a3928170f6e5d4c3b2a19807f6e5d4c3b2a19068574b3a29180706e5d4c3b2a19078950b6e5d4c3b2a19087654b3a29180706e5d4"
+# Required - GENERATE YOUR OWN, DON'T USE EXAMPLE VALUES!
+SECRET_KEY_BASE="generate_with_rails_secret_command"
 DATABASE_URL="postgresql://user:password@host:port/database"
 REDIS_URL="redis://localhost:6379/0"
 
@@ -88,11 +105,13 @@ DMARC_POLICY="v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com"
 
 ### 🔒 Application Security
 
-1. **Secret Management**
-   - ✅ Rails secret key generated and set in production
+1. **Secret Management** ⚠️ **CRITICAL**
+   - ✅ Rails secret key generated with `rails secret`
+   - ❌ **NEVER commit secrets to git**
+   - ✅ Use environment variables or encrypted credentials
    - ✅ Database credentials secured
    - ✅ SMTP credentials secured
-   - ⚠️ Consider using encrypted credentials: `rails credentials:edit`
+   - ⭐ **Recommended**: Use `rails credentials:edit` for production secrets
 
 2. **User Authentication**
    - ✅ Devise configured with secure defaults
@@ -254,6 +273,38 @@ bundle exec puma -C config/puma.rb
 bundle exec sidekiq -e production
 ```
 
+## Secret Management Best Practices
+
+### ❌ **NEVER DO THIS:**
+```bash
+# Don't commit secrets to git
+export SECRET_KEY_BASE="abc123..." # in a file that gets committed
+```
+
+### ✅ **DO THIS INSTEAD:**
+
+**Option 1: Environment Variables**
+```bash
+# On your production server only
+export SECRET_KEY_BASE="$(bundle exec rails secret)"
+```
+
+**Option 2: Rails Encrypted Credentials (Recommended)**
+```bash
+# Generate master key (keep this safe, don't commit)
+EDITOR="nano" rails credentials:edit
+
+# Add secrets to the encrypted file:
+# secret_key_base: generated_secret_here
+# database_password: db_password_here
+```
+
+**Option 3: External Secret Management**
+- AWS Secrets Manager
+- HashiCorp Vault
+- Azure Key Vault
+- Docker secrets
+
 ## Monitoring & Maintenance
 
 ### Daily
@@ -274,10 +325,11 @@ bundle exec sidekiq -e production
 ## Quick Security Wins
 
 1. **Enable SSL/HTTPS** (highest priority)
-2. **Set up email authentication** (SPF, DKIM, DMARC)
-3. **Configure proper firewall rules**
-4. **Set up basic monitoring/alerting**
-5. **Implement automated backups**
+2. **Secure secret management** (use encrypted credentials)
+3. **Set up email authentication** (SPF, DKIM, DMARC)
+4. **Configure proper firewall rules**
+5. **Set up basic monitoring/alerting**
+6. **Implement automated backups**
 
 ## Emergency Contacts
 
