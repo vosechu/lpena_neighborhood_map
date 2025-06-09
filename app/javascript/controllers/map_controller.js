@@ -108,6 +108,9 @@ export default class extends Controller {
             const compiled = _.template(templateHtml);
             modalEl.innerHTML = compiled({ resident });
             modalEl.style.display = 'block';
+
+            // Add save button handler after modal content is set
+            this.attachResidentFormHandlers(resident, house);
           }
         });
       });
@@ -127,5 +130,171 @@ export default class extends Controller {
     const templateHtml = document.getElementById('house-edit-form-template').innerHTML;
     const compiled = _.template(templateHtml);
     return compiled({ house });
+  }
+
+  attachResidentFormHandlers(resident, house) {
+    // Wait for next tick to ensure DOM is ready
+    setTimeout(() => {
+      const saveBtn = document.querySelector('.save-resident-btn');
+      if (saveBtn) {
+        saveBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.saveResident(resident, house);
+        });
+      }
+
+      // Add homepage URL normalization
+      const homepageField = document.querySelector('#resident-homepage');
+      if (homepageField) {
+        homepageField.addEventListener('blur', (e) => {
+          this.normalizeHomepageUrl(e.target);
+        });
+      }
+
+      // Add cancel/close handlers
+      const modalEl = document.getElementById('modal');
+      if (modalEl) {
+        // Close on background click
+        modalEl.addEventListener('click', (e) => {
+          if (e.target === modalEl) {
+            modalEl.style.display = 'none';
+          }
+        });
+      }
+    }, 0);
+  }
+
+  saveResident(resident, house) {
+    const modalEl = document.getElementById('modal');
+
+    // Normalize homepage URL before saving
+    const homepageField = modalEl.querySelector('#resident-homepage');
+    if (homepageField) {
+      this.normalizeHomepageUrl(homepageField);
+    }
+
+    // Collect form data
+    const formData = {};
+    const formFields = modalEl.querySelectorAll('[data-resident-field]');
+
+    formFields.forEach(field => {
+      const fieldName = field.dataset.residentField;
+      formData[fieldName] = field.value;
+    });
+
+    // Disable save button and show loading state
+    const saveBtn = modalEl.querySelector('.save-resident-btn');
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
+        // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken.getAttribute('content');
+    }
+
+    // Make API call to update resident
+    fetch(`/api/residents/${resident.id}`, {
+      method: 'PATCH',
+      headers: headers,
+      body: JSON.stringify({ resident: formData })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(updatedResident => {
+      console.log('Resident updated successfully:', updatedResident);
+
+      // Update resident data in house object
+      const residentIndex = house.residents.findIndex(r => r.id === resident.id);
+      if (residentIndex !== -1) {
+        house.residents[residentIndex] = { ...house.residents[residentIndex], ...updatedResident };
+      }
+
+      // Close modal
+      modalEl.style.display = 'none';
+
+      // Update popup content with new data
+      this.map.closePopup();
+      this.addHousePopup(house);
+
+      // Show success message
+      this.showSuccessMessage('Resident updated successfully!');
+    })
+    .catch(error => {
+      console.error('Error updating resident:', error);
+
+      // Re-enable save button
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
+      }
+
+      // Show error message
+      this.showErrorMessage('Failed to update resident. Please try again.');
+    });
+  }
+
+  showSuccessMessage(message) {
+    // Simple success notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
+
+  showErrorMessage(message) {
+    // Simple error notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.remove();
+    }, 5000);
+  }
+
+  normalizeHomepageUrl(inputField) {
+    let url = inputField.value.trim();
+
+    // Don't process empty values
+    if (!url) {
+      return;
+    }
+
+    // Convert to lowercase for checking
+    const lowerUrl = url.toLowerCase();
+
+    // If it doesn't start with http:// or https://, add https://
+    if (!lowerUrl.startsWith('http://') && !lowerUrl.startsWith('https://')) {
+      // Handle common cases like "www.example.com" or "example.com"
+      url = 'https://' + url;
+      inputField.value = url;
+
+      // Add a subtle visual feedback to show the URL was normalized
+      inputField.style.backgroundColor = '#f0f9ff'; // Light blue background
+      inputField.style.transition = 'background-color 0.3s ease';
+
+      setTimeout(() => {
+        inputField.style.backgroundColor = '';
+        setTimeout(() => {
+          inputField.style.transition = '';
+        }, 300);
+      }, 1000);
+    }
   }
 }

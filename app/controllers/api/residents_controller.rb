@@ -47,6 +47,11 @@ class Api::ResidentsController < ApplicationController
   end
 
   def resident_params
-    params.require(:resident).permit(:display_name, :homepage, :phone, :email, :skills, :comments)
+    params.require(:resident).permit(
+      :display_name, :homepage, :phone,
+      :email, :skills, :comments,
+      :birthdate, :hide_email, :hide_phone,
+      :hide_birthdate, :hide_display_name, :email_notifications_opted_out,
+      :hidden)
   end
 end
