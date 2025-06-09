@@ -2,11 +2,9 @@ require 'sidekiq/web'
 require 'sidekiq-scheduler/web'
 
 Rails.application.routes.draw do
+  mount_avo
   # Authentication - disable registration for closed site
   devise_for :users, skip: [ :registrations ]
-
-  # Admin interface
-  mount RailsAdmin::Engine => '/admin', as: 'rails_admin'
 
   # Opt-out functionality for resident notifications
   get '/opt-out/:token', to: 'opt_outs#show', as: :opt_out

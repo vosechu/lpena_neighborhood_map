@@ -25,8 +25,9 @@ gem 'sidekiq-scheduler'
 gem 'devise'
 gem 'cancancan'
 
-# Admin interface
-gem 'rails_admin'
+# Admin interface - Rails 8 compatible
+gem 'avo'
+gem 'ransack' # For search functionality in Avo
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: %i[ windows jruby ]
@@ -88,4 +89,3 @@ end
 
 gem 'importmap-rails', '~> 2.1'
 gem 'stimulus-rails', '~> 1.3'
-gem 'cssbundling-rails'
