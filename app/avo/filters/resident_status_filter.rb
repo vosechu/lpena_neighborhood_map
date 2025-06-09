@@ -1,10 +1,10 @@
 class Avo::Filters::ResidentStatusFilter < Avo::Filters::SelectFilter
   self.name = 'Status'
 
-  def apply(request, query, values)
-    return query if values.blank?
+  def apply(request, query, value)
+    return query if value.blank?
 
-    case values.first
+    case value
     when 'active'
       query.where(hidden: [ false, nil ])
     when 'hidden'
