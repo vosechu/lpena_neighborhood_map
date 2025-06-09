@@ -11,4 +11,16 @@ class House < ApplicationRecord
   validates :latitude, presence: true
   validates :longitude, presence: true
   validates :boundary_geometry, presence: true
+
+  def self.ransackable_attributes(auth_object = nil)
+    [ 'city', 'id', 'street_name', 'street_number', 'zip' ]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    [ 'residents', 'users' ]
+  end
+
+  def to_s
+    "#{street_number} #{street_name}"
+  end
 end

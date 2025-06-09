@@ -19,4 +19,12 @@ class User < ApplicationRecord
   def user?
     role == 'user'
   end
+
+  def self.ransackable_attributes(auth_object = nil)
+    [ 'email', 'name', 'role' ]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    [ 'resident', 'house' ]
+  end
 end
