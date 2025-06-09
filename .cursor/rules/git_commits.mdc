@@ -1,0 +1,104 @@
+---
+description: Any time we're working with git or git commits
+globs:
+alwaysApply: false
+---
+# Git Commit Message Standards
+
+Follow these standards for consistent, professional git commit messages.
+
+## Format Structure
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+## Subject Line Rules
+- **Length**: Maximum 50 characters
+- **Case**: Start with capital letter
+- **Mood**: Use imperative mood ("Add feature" not "Added feature" or "Adds feature")
+- **Punctuation**: No trailing period
+- **Present tense**: Write as if completing "This commit will..."
+
+## Types (Required)
+- `feat`: New feature for the user
+- `fix`: Bug fix for the user
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, semicolons, etc.)
+- `refactor`: Code refactoring (no functional changes)
+- `test`: Adding or updating tests
+- `chore`: Build process, dependency updates, tooling
+
+## Scope (Optional)
+- Specify the area of change: `feat(auth): add password reset`
+- Use lowercase, no spaces: `fix(api): handle null responses`
+
+## Body Rules
+- **Length**: Wrap at 72 characters per line
+- **Purpose**: Explain the "what" and "why", not the "how"
+- **Separate**: Blank line between subject and body
+- **Multiple lines**: OK for complex changes
+
+## Footer Rules
+- **Breaking changes**: `BREAKING CHANGE: <description>`
+- **Issue references**: `Fixes #123` or `Closes #456`
+- **Co-authors**: `Co-authored-by: Name <email>`
+
+## Examples
+
+### Simple feature
+```
+feat: add email unsubscribe functionality
+```
+
+### Bug fix with scope
+```
+fix(auth): prevent duplicate user creation
+```
+
+### Feature with body
+```
+feat: add one-click email unsubscribe
+
+Add Gmail-style unsubscribe functionality with List-Unsubscribe
+headers. Users can unsubscribe without visiting the website.
+
+- Add EmailSafetyInterceptor for non-production environments
+- Include unsubscribe links in all notification emails
+- Support both form-based and one-click unsubscribe flows
+```
+
+### Breaking change
+```
+feat!: redesign user authentication system
+
+BREAKING CHANGE: The authentication API has changed. All clients
+must update to use the new JWT token format.
+
+Fixes #234
+```
+
+## What NOT to do
+- ❌ `fix stuff` (too vague)
+- ❌ `Fixed the bug where users couldn't login` (past tense)
+- ❌ `Add email unsubscribe functionality.` (trailing period)
+- ❌ `EMAIL UNSUBSCRIBE FEATURE` (all caps)
+- ❌ `feat: this commit adds a really long subject line that exceeds fifty characters` (too long)
+
+## Multi-commit features
+For large features spanning multiple commits:
+```
+feat: add email opt-out system foundation
+feat: add one-click unsubscribe routes
+feat: add email safety interceptor
+docs: add email opt-out documentation
+```
+
+## Commit frequency
+- Commit early and often with logical units of work
+- Each commit should be a complete, working change
+- Avoid "WIP" or "temp" commits in main branch
+- Use interactive rebase to clean up commit history before merging
