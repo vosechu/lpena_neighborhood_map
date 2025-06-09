@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "rails_admin": "3.3.0",
-    "task-master-ai": "^0.13.2"
-  }
-}
