@@ -8,7 +8,7 @@ alwaysApply: true
 This is a Rails 8 application with a focus on clean architecture and maintainable code.
 
 ## Backend Architecture
-- Standard Rails 8 backend with minimal JS provided by Stimulus
+- Standard Rails 8 backend with minimal JS provided by Stimulus. Stop and ask for permission if anything requires sprockets, SCSS, asset compilation.
 - Frontend mapping functionality provided by leaflet.js
 - Background worker using Sidekiq and Sidekiq scheduler for nightly data downloads
 

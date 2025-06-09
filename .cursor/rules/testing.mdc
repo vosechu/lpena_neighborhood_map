@@ -1,20 +1,24 @@
 ---
-description: testing rspec
+description:
 globs:
-alwaysApply: false
+alwaysApply: true
 ---
 # Testing Guidelines
+
+- ALWAYS run the specs and rubocop after changes
+- ALL changes require new specs to be written (or request specs to be modified)
 
 ## RSpec Best Practices
 - Follow Sandi Metz's testing principles
 - Test objects in isolation
-- Mock collaborators appropriately
+- Mock collaborators if at all possible
 - Test public interfaces
 
 ## Mocking Strategy
 - Use RSpec mocks with `and_call_original` for partial mocking
 - Only mock the methods you need to control
 - Let other methods behave normally
+- Only use `instance_double`, NEVER USE `double`
 - WebMock is configured globally to prevent accidental network calls
 
 ## Example Unit Test Structure
@@ -39,11 +43,55 @@ RSpec.describe MyClass do
 end
 ```
 
-## Example Controller Test Structure
-Controller tests follow Sandi-style and are only concerned with:
+## Example Request Spec Structure (aka Controller spec, controller test, integration test)
+Request specs follow Sandi-style and are only concerned with:
 * Status codes
 * Logic strictly within the controller action
 * Mocked calls to other classes
+
+Notes
+* Do not create database objects unless strictly needed (for instance, for auth)
+* Try to minimize the number of distinct request specs; it's okay to have multiple expectations in one request spec.
+
+### Example Request Spec
+```ruby
+require 'rails_helper'
+
+RSpec.describe 'Avo Integration', type: :request do
+  # We would prefer not to create database objects, but these are needed for logging in
+  let(:user) { create(:user) }
+  let(:house) { create(:house) }
+  let(:resident) { create(:resident, house: house) }
+
+  describe 'Avo Dashboard' do
+    context 'when authenticated' do
+      before do
+        post user_session_path, params: { user: { email: user.email, password: user.password } }
+      end
+
+      it 'renders the avo dashboard' do
+        get '/avo'
+        # Avo redirects to the first resource by default
+        expect(response).to redirect_to('/avo/resources/houses')
+      end
+    end
+
+    describe 'ResidentStatusFilter' do
+      let(:filter) { Avo::Filters::ResidentStatusFilter.new }
+      let(:base_query) { instance_double('ActiveRecord::Relation') }
+      let(:where_query) { instance_double('ActiveRecord::Relation') }
+      let(:where_not_query) { instance_double('ActiveRecord::Relation') }
+
+      it 'filters for current residents' do
+        allow(base_query).to receive(:where).with(last_seen_at: nil, hidden: [ false, nil ]).and_return([ 'current_resident' ])
+
+        result = filter.apply(nil, base_query, [ 'current' ])
+        expect(result).to eq([ 'current_resident' ])
+      end
+    end
+  end
+end
+```
 
 ## Key Test Files
 - [spec_helper.rb](mdc:spec/spec_helper.rb) - Global rspec config
