@@ -28,8 +28,7 @@ namespace :admin do
       user = UserCreationService.create_user(
         email: email,
         name: name,
-        role: 'admin',
-        send_invitation: false
+        role: 'admin'
       )
 
       # Generate initial login token
