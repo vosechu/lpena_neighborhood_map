@@ -22,6 +22,13 @@ Implement Resident Management UI:
   - Create a UI for adding, editing, and removing residents. Implement privacy controls for each resident, allowing users to manage visibility of personal information.
   - Test: Conduct usability testing to ensure the UI is intuitive and privacy controls function as expected.
 
+  - Subtask: Allow residents to hide their birth year
+    - Add a boolean field to the Resident model to control birth year visibility @status(pending)
+    - Update Resident model and queries to respect the hidden birth year flag @status(pending)
+    - Update UI to provide an option for residents to hide/show their birth year @status(pending)
+    - Ensure the birth year is hidden wherever resident information is shown if the flag is set @status(pending)
+    - Add tests to verify birth year hiding functionality @status(pending)
+
   - Subtask: Implement Audit and History Tracking
     - Track changes to resident and house data for accountability and history. @status(pending) @priority(medium)
     - Log all changes (create, update, delete).

@@ -31,8 +31,9 @@ RSpec.describe 'Authentication', type: :request do
         expect(response).to have_http_status(200)
       end
 
-      it 'denies access to admin interface' do
-        expect { get rails_admin_path }.to raise_error(CanCan::AccessDenied)
+      it 'allows access to admin interface' do
+        get '/avo'
+        expect(response).to redirect_to('/avo/resources/houses') # Avo redirects to first resource
       end
     end
 
@@ -57,7 +58,6 @@ RSpec.describe 'Authentication', type: :request do
         expect(admin.admin?).to be true
         ability = Ability.new(admin)
         expect(ability.can?(:manage, :all)).to be true
-        expect(ability.can?(:access, :rails_admin)).to be true
       end
     end
   end
