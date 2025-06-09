@@ -92,45 +92,44 @@ RSpec.describe 'Avo Integration', type: :request do
     describe 'ResidentStatusFilter' do
       let(:filter) { Avo::Filters::ResidentStatusFilter.new }
       let(:base_query) { instance_double('ActiveRecord::Relation') }
-      let(:where_query) { instance_double('ActiveRecord::Relation') }
-      let(:where_not_query) { instance_double('ActiveRecord::Relation') }
+      let(:filtered_query) { instance_double('ActiveRecord::Relation') }
 
       it 'filters for current residents' do
-        allow(base_query).to receive(:where).with(last_seen_at: nil, hidden: [ false, nil ]).and_return([ 'current_resident' ])
+        allow(base_query).to receive(:where).with(last_seen_at: nil, hidden: [ false, nil ]).and_return(filtered_query)
 
-        result = filter.apply(nil, base_query, [ 'current' ])
-        expect(result).to eq([ 'current_resident' ])
+        result = filter.apply(nil, base_query, 'current')
+        expect(result).to eq(filtered_query)
       end
 
       it 'filters for past residents' do
-        # Stub the where.not chain by allowing base_query to return the final result directly
-        allow(base_query).to receive_message_chain(:where, :not).with(no_args).with(last_seen_at: nil).and_return([ 'past_resident' ])
+        # Use receive_message_chain for the where.not chain
+        allow(base_query).to receive_message_chain(:where, :not).with(no_args).with(last_seen_at: nil).and_return(filtered_query)
 
-        result = filter.apply(nil, base_query, [ 'past' ])
-        expect(result).to eq([ 'past_resident' ])
+        result = filter.apply(nil, base_query, 'past')
+        expect(result).to eq(filtered_query)
       end
 
       it 'filters for hidden residents' do
-        allow(base_query).to receive(:where).with(hidden: true).and_return([ 'hidden_resident' ])
+        allow(base_query).to receive(:where).with(hidden: true).and_return(filtered_query)
 
-        result = filter.apply(nil, base_query, [ 'hidden' ])
-        expect(result).to eq([ 'hidden_resident' ])
+        result = filter.apply(nil, base_query, 'hidden')
+        expect(result).to eq(filtered_query)
       end
 
       it 'filters for active residents' do
-        allow(base_query).to receive(:where).with(hidden: [ false, nil ]).and_return([ 'active_resident' ])
+        allow(base_query).to receive(:where).with(hidden: [ false, nil ]).and_return(filtered_query)
 
-        result = filter.apply(nil, base_query, [ 'active' ])
-        expect(result).to eq([ 'active_resident' ])
+        result = filter.apply(nil, base_query, 'active')
+        expect(result).to eq(filtered_query)
       end
 
       it 'returns original query for unknown values' do
-        result = filter.apply(nil, base_query, [ 'unknown' ])
+        result = filter.apply(nil, base_query, 'unknown')
         expect(result).to eq(base_query)
       end
 
       it 'returns original query for blank values' do
-        result = filter.apply(nil, base_query, [])
+        result = filter.apply(nil, base_query, '')
         expect(result).to eq(base_query)
       end
 
@@ -148,23 +147,24 @@ RSpec.describe 'Avo Integration', type: :request do
     describe 'EmailOptOutFilter' do
       let(:filter) { Avo::Filters::EmailOptOutFilter.new }
       let(:base_query) { instance_double('ActiveRecord::Relation') }
+      let(:filtered_query) { instance_double('ActiveRecord::Relation') }
 
       it 'filters for opted out residents' do
-        allow(base_query).to receive(:where).with(email_notifications_opted_out: true).and_return([ 'opted_out_resident' ])
+        allow(base_query).to receive(:where).with(email_notifications_opted_out: true).and_return(filtered_query)
 
-        result = filter.apply(nil, base_query, { opted_out: true })
-        expect(result).to eq([ 'opted_out_resident' ])
+        result = filter.apply(nil, base_query, { 'opted_out' => true })
+        expect(result).to eq(filtered_query)
       end
 
       it 'filters for subscribed residents' do
-        allow(base_query).to receive(:where).with(email_notifications_opted_out: false).and_return([ 'subscribed_resident' ])
+        allow(base_query).to receive(:where).with(email_notifications_opted_out: false).and_return(filtered_query)
 
-        result = filter.apply(nil, base_query, { opted_out: false })
-        expect(result).to eq([ 'subscribed_resident' ])
+        result = filter.apply(nil, base_query, { 'opted_out' => false })
+        expect(result).to eq(filtered_query)
       end
 
       it 'returns original query for nil values' do
-        result = filter.apply(nil, base_query, { opted_out: nil })
+        result = filter.apply(nil, base_query, { 'opted_out' => nil })
         expect(result).to eq(base_query)
       end
 
