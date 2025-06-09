@@ -8,7 +8,7 @@
   <h3>Changes Made:</h3>
   <% @changes.each do |field, change| %>
     <div style="margin-bottom: 12px;">
-      <strong><%= field.humanize %>:</strong>
+      <strong><%= field.to_s.humanize %>:</strong>
       <% if change[:from].blank? %>
         <span style="color: #059669;">Added: "<%= change[:to] %>"</span>
       <% elsif change[:to].blank? %>
@@ -51,3 +51,12 @@
 <p>Thanks for being part of our neighborhood community!</p>
 
 <p>—Your neighbors</p>
+
+<hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
+
+<p style="font-size: 12px; color: #6b7280; text-align: center;">
+  <strong>Email Preferences:</strong><br>
+  <a href="<%= @unsubscribe_url %>" style="color: #6b7280; text-decoration: underline;">Unsubscribe from future emails</a> |
+  <a href="<%= @opt_out_url %>" style="color: #6b7280; text-decoration: underline;">All privacy options</a><br>
+  Don't want email notifications? <a href="<%= @unsubscribe_url %>" style="color: #6b7280; text-decoration: underline;">Unsubscribe here</a> and stay in the directory.
+</p>

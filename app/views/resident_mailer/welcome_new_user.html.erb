@@ -13,12 +13,13 @@
   <li><strong>Stay informed</strong> - See who lives where and how to reach them</li>
 </ul>
 
-<p><strong>This is run by neighbors, for neighbors</strong> - not some big corporation. It's a grassroots effort to help our community stay connected.</p>
+<p><strong>This is run by your neighbors, for you</strong> - not some big corporation. It's a grassroots effort to help our community stay connected.</p>
 
 <h2>Your Information</h2>
 <p>Here's what we currently have on file for you:</p>
 <ul>
   <li><strong>Name:</strong> <%= @resident.display_name.presence || @resident.official_name %></li>
+  <li><strong>Email:</strong> <%= @resident.email %></li>
   <% if @resident.phone.present? %>
     <li><strong>Phone:</strong> <%= @resident.phone %></li>
   <% end %>
@@ -58,3 +59,12 @@
 <p>Welcome to the neighborhood!</p>
 
 <p>—Your neighbors</p>
+
+<hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
+
+<p style="font-size: 12px; color: #6b7280; text-align: center;">
+  <strong>Email Preferences:</strong><br>
+  <a href="<%= @unsubscribe_url %>" style="color: #6b7280; text-decoration: underline;">Unsubscribe from future emails</a> |
+  <a href="<%= @opt_out_url %>" style="color: #6b7280; text-decoration: underline;">Privacy options</a><br>
+  You can manage your privacy settings at any time.
+</p>

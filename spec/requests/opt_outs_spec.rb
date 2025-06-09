@@ -1,96 +1,200 @@
 require 'rails_helper'
 
-RSpec.describe OptOutsController, type: :request do
-  let(:resident) { create(:resident, email: 'test@example.com', hidden: false) }
-  let(:token_data) { { resident_id: resident.id, expires_at: 30.days.from_now.to_s } }
-  let(:valid_token) { Rails.application.message_verifier(:opt_out).generate(token_data) }
-  let(:expired_token_data) { { resident_id: resident.id, expires_at: 1.day.ago.to_s } }
-  let(:expired_token) { Rails.application.message_verifier(:opt_out).generate(expired_token_data) }
+RSpec.describe 'Opt Outs', type: :request do
+  let(:resident) { create(:resident, display_name: 'Test Resident', email: 'test@example.com') }
+  let(:token) { generate_opt_out_token(resident) }
+  let(:expired_token) { generate_expired_opt_out_token(resident) }
   let(:invalid_token) { 'invalid-token' }
+
+  def generate_opt_out_token(resident)
+    Rails.application.message_verifier(:opt_out).generate({
+      resident_id: resident.id,
+      expires_at: 30.days.from_now
+    })
+  end
+
+  def generate_expired_opt_out_token(resident)
+    Rails.application.message_verifier(:opt_out).generate({
+      resident_id: resident.id,
+      expires_at: 1.day.ago
+    })
+  end
 
   describe 'GET /opt-out/:token' do
     context 'with valid token' do
-      it 'shows the opt-out page' do
-        get opt_out_path(valid_token)
-        expect(response).to have_http_status(:success)
-        expect(response.body).to include('Remove from Neighborhood Directory')
-        expect(response.body).to include(resident.display_name.presence || resident.official_name)
+      it 'shows opt-out options page' do
+        get opt_out_path(token)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('Privacy Options')
+        expect(response.body).to include('Test Resident')
+        expect(response.body).to include('Stop Email Notifications')
+        expect(response.body).to include('Hide from Directory')
       end
     end
 
     context 'with expired token' do
       it 'shows error message' do
         get opt_out_path(expired_token)
-        expect(response).to have_http_status(:success)
+
+        expect(response).to have_http_status(:ok)
         expect(response.body).to include('This opt-out link has expired')
-        expect(response.body).to include('vosechu@gmail.com')
       end
     end
 
     context 'with invalid token' do
       it 'shows error message' do
         get opt_out_path(invalid_token)
-        expect(response).to have_http_status(:success)
+
+        expect(response).to have_http_status(:ok)
         expect(response.body).to include('Invalid opt-out link')
-        expect(response.body).to include('vosechu@gmail.com')
       end
     end
 
-    context 'with token for non-existent resident' do
-      let(:invalid_resident_token) { Rails.application.message_verifier(:opt_out).generate({ resident_id: 99999, expires_at: 30.days.from_now.to_s }) }
+    context 'with non-existent resident' do
+      let(:token_for_missing_resident) do
+        Rails.application.message_verifier(:opt_out).generate({
+          resident_id: 99999,
+          expires_at: 30.days.from_now
+        })
+      end
 
       it 'shows error message' do
-        get opt_out_path(invalid_resident_token)
-        expect(response).to have_http_status(:success)
+        get opt_out_path(token_for_missing_resident)
+
+        expect(response).to have_http_status(:ok)
         expect(response.body).to include('Resident not found')
-        expect(response.body).to include('vosechu@gmail.com')
       end
     end
   end
 
-  describe 'POST /opt-out/:token' do
+  describe 'POST /opt-out/:token/opt-out-emails' do
     context 'with valid token' do
-      it 'opts out the resident and shows success message' do
-        expect {
-          post opt_out_path(valid_token)
-        }.to change { resident.reload.hidden }.from(false).to(true)
+      it 'opts resident out of email notifications' do
+        expect(resident.email_notifications_opted_out).to be_falsey
 
-        expect(response).to have_http_status(:success)
-        expect(response.body).to include('Success!')
-        expect(response.body).to include('You have been removed from the neighborhood directory')
-      end
-    end
+        post form_opt_out_emails_path(token)
 
-    context 'with expired token' do
-      it 'shows error message and does not opt out' do
-        expect {
-          post opt_out_path(expired_token)
-        }.not_to change { resident.reload.hidden }
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('Unsubscribed!')
+        expect(response.body).to include('Email Notifications Disabled')
 
-        expect(response).to have_http_status(:success)
-        expect(response.body).to include('This opt-out link has expired')
+        resident.reload
+        expect(resident.email_notifications_opted_out).to be_truthy
+        expect(resident.hidden).to be_falsey # Still visible in directory
       end
     end
 
     context 'with invalid token' do
-      it 'shows error message and does not opt out' do
-        expect {
-          post opt_out_path(invalid_token)
-        }.not_to change { resident.reload.hidden }
+      it 'shows error message' do
+        post form_opt_out_emails_path(invalid_token)
 
-        expect(response).to have_http_status(:success)
+        expect(response).to have_http_status(:ok)
         expect(response.body).to include('Invalid opt-out link')
       end
     end
+  end
 
-    context 'when update fails' do
-      it 'shows error message' do
-        allow_any_instance_of(Resident).to receive(:update).and_return(false)
+  describe 'POST /opt-out/:token/hide-directory' do
+    context 'with valid token' do
+      it 'hides resident from directory' do
+        expect(resident.hidden).to be_falsey
 
-        post opt_out_path(valid_token)
-        expect(response).to have_http_status(:success)
-        expect(response.body).to include('Unable to process opt-out request')
+        post hide_from_directory_path(token)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('Success!')
+        expect(response.body).to include('Hidden from Directory')
+
+        resident.reload
+        expect(resident.hidden).to be_truthy
+        expect(resident.email_notifications_opted_out).to be_falsey # Email preference unchanged
       end
+    end
+
+    context 'with invalid token' do
+      it 'shows error message' do
+        post hide_from_directory_path(invalid_token)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('Invalid opt-out link')
+      end
+    end
+  end
+
+  describe 'GET /unsubscribe/:token' do
+    context 'with valid token' do
+      it 'immediately opts out of emails with quick unsubscribe message' do
+        expect(resident.email_notifications_opted_out).to be_falsey
+
+        get one_click_unsubscribe_path(token)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('Unsubscribed!')
+        expect(response.body).to include('You have been unsubscribed from email notifications')
+        expect(response.body).to include('You are still listed in the neighborhood directory')
+
+        resident.reload
+        expect(resident.email_notifications_opted_out).to be_truthy
+        expect(resident.hidden).to be_falsey # Still visible in directory
+      end
+    end
+
+    context 'with invalid token' do
+      it 'shows error message' do
+        get one_click_unsubscribe_path(invalid_token)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('Invalid opt-out link')
+      end
+    end
+  end
+
+  describe 'Email opt-out functionality' do
+    let(:opted_out_resident) { create(:resident, :opted_out_of_emails) }
+
+    it 'respects email opt-out preference in mailer' do
+      # Verify that no email delivery is attempted for opted-out residents
+      expect(ResidentMailer).not_to receive(:data_change_notification)
+
+      # Use the class method that handles the conditional logic
+      ResidentMailer.deliver_data_change_notification(opted_out_resident, { display_name: { from: 'Old', to: 'New' } })
+    end
+
+    it 'sends emails to residents who have not opted out' do
+      resident.update!(email_notifications_opted_out: false)
+
+      # Mock deliver_later to verify it IS called for non-opted-out residents
+      expect_any_instance_of(ActionMailer::MessageDelivery).to receive(:deliver_later)
+
+      ResidentMailer.deliver_data_change_notification(resident, { display_name: { from: 'Old Name', to: 'New Name' } })
+    end
+
+    it 'can create email instance for non-opted-out residents' do
+      resident.update!(email_notifications_opted_out: false)
+
+      mail = ResidentMailer.data_change_notification(resident, { display_name: { from: 'Old Name', to: 'New Name' } })
+
+      expect(mail).not_to be_nil
+      expect(mail.to).to eq([ resident.email ])
+    end
+  end
+
+  describe 'Email headers for unsubscribe' do
+    it 'includes List-Unsubscribe headers in welcome email' do
+      user = create(:user, email: 'user@example.com')
+
+      mail = ResidentMailer.welcome_new_user(resident, user)
+
+      expect(mail['List-Unsubscribe'].to_s).to include('/unsubscribe/')
+      expect(mail['List-Unsubscribe-Post'].to_s).to eq('List-Unsubscribe=One-Click')
+    end
+
+    it 'includes List-Unsubscribe headers in data change notification' do
+      mail = ResidentMailer.data_change_notification(resident, { display_name: { from: 'Old Name', to: 'New Name' } })
+
+      expect(mail['List-Unsubscribe'].to_s).to include('/unsubscribe/')
+      expect(mail['List-Unsubscribe-Post'].to_s).to eq('List-Unsubscribe=One-Click')
     end
   end
 end

@@ -3,15 +3,38 @@ class OptOutsController < ApplicationController
   before_action :verify_token
 
   def show
-    # Show opt-out confirmation page
+    # Show opt-out options page
   end
 
-  def create
+  def hide_from_directory
     if @resident.update(hidden: true)
-      @success = true
+      @success = 'directory_hidden'
       render :show
     else
-      @error = 'Unable to process opt-out request. Please try again.'
+      @error = 'Unable to hide from directory. Please try again.'
+      render :show
+    end
+  end
+
+  def form_opt_out_emails
+    # Form-based email opt-out from the privacy options page
+    if @resident.update(email_notifications_opted_out: true)
+      @success = 'emails_opted_out'
+      render :show
+    else
+      @error = 'Unable to opt out from emails. Please try again.'
+      render :show
+    end
+  end
+
+  def one_click_unsubscribe
+    # One-click unsubscribe for email clients (Gmail, Outlook, etc.)
+    if @resident.update(email_notifications_opted_out: true)
+      @success = 'emails_opted_out'
+      @quick_unsubscribe = true
+      render :show
+    else
+      @error = 'Unable to unsubscribe. Please try again.'
       render :show
     end
   end

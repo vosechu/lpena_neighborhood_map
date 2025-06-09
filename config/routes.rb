@@ -10,7 +10,9 @@ Rails.application.routes.draw do
 
   # Opt-out functionality for resident notifications
   get '/opt-out/:token', to: 'opt_outs#show', as: :opt_out
-  post '/opt-out/:token', to: 'opt_outs#create'
+  post '/opt-out/:token/hide-directory', to: 'opt_outs#hide_from_directory', as: :hide_from_directory
+  post '/opt-out/:token/opt-out-emails', to: 'opt_outs#form_opt_out_emails', as: :form_opt_out_emails
+  get '/unsubscribe/:token', to: 'opt_outs#one_click_unsubscribe', as: :one_click_unsubscribe
 
   namespace :api do
     resources :houses

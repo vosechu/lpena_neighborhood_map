@@ -57,6 +57,10 @@ FactoryBot.define do
       email_notifications_opted_out { true }
     end
 
+    trait :opted_out_of_emails do
+      email_notifications_opted_out { true }
+    end
+
     trait :without_email do
       email { nil }
     end
