@@ -145,42 +145,6 @@ RSpec.describe 'Avo Integration', type: :request do
       end
     end
 
-    describe 'PublicVisibilityFilter' do
-      let(:filter) { Avo::Filters::PublicVisibilityFilter.new }
-      let(:base_query) { instance_double('ActiveRecord::Relation') }
-
-      it 'filters for public visibility true' do
-        allow(base_query).to receive(:where).with(public_visibility: true).and_return([ 'public_resident' ])
-
-        result = filter.apply(nil, base_query, { public_visibility: true })
-        expect(result).to eq([ 'public_resident' ])
-      end
-
-      it 'filters for public visibility false' do
-        allow(base_query).to receive(:where).with(public_visibility: false).and_return([ 'private_resident' ])
-
-        result = filter.apply(nil, base_query, { public_visibility: false })
-        expect(result).to eq([ 'private_resident' ])
-      end
-
-      it 'returns original query for nil values' do
-        result = filter.apply(nil, base_query, { public_visibility: nil })
-        expect(result).to eq(base_query)
-      end
-
-      it 'returns original query for missing key' do
-        result = filter.apply(nil, base_query, {})
-        expect(result).to eq(base_query)
-      end
-
-      it 'has correct options' do
-        expected_options = {
-          public_visibility: 'Public Visibility'
-        }
-        expect(filter.options).to eq(expected_options)
-      end
-    end
-
     describe 'EmailOptOutFilter' do
       let(:filter) { Avo::Filters::EmailOptOutFilter.new }
       let(:base_query) { instance_double('ActiveRecord::Relation') }

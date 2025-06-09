@@ -9,7 +9,6 @@ class Avo::Resources::Resident < Avo::BaseResource
         display_name_cont: params[:q],
         email_cont: params[:q],
         phone_cont: params[:q],
-        secondary_official_name_cont: params[:q],
         m: 'or'
       ).result(distinct: false)
     }
@@ -18,9 +17,8 @@ class Avo::Resources::Resident < Avo::BaseResource
   def fields
     # Basic Info
     field :id, as: :id, sortable: true
-    field :official_name, as: :text, sortable: true, required: true
-    field :secondary_official_name, as: :text, sortable: true
     field :display_name, as: :text, sortable: true
+    field :official_name, as: :text, sortable: true, required: true
 
     # Contact Info
     field :email, as: :text, sortable: true
@@ -38,7 +36,6 @@ class Avo::Resources::Resident < Avo::BaseResource
     field :hide_birthdate, as: :boolean
 
     # Status & Visibility
-    field :public_visibility, as: :boolean, sortable: true
     field :hidden, as: :boolean, sortable: true
     field :email_notifications_opted_out, as: :boolean
 
@@ -58,7 +55,6 @@ class Avo::Resources::Resident < Avo::BaseResource
 
   def filters
     filter Avo::Filters::ResidentStatusFilter
-    filter Avo::Filters::PublicVisibilityFilter
     filter Avo::Filters::EmailOptOutFilter
   end
 end
