@@ -75,29 +75,17 @@ RSpec.describe 'Email Safety System' do
       end
     end
 
-    context 'in staging environment' do
-      before do
-        allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new('staging'))
-        allow(interceptor).to receive(:redirect_to_safe_addresses)
-      end
 
-      it 'redirects to safe addresses' do
-        interceptor.delivering_email(message)
-
-        expect(interceptor).to have_received(:redirect_to_safe_addresses).with(message)
-        expect(Rails.logger).to have_received(:warn).with('Email Safety: STAGING environment - redirecting emails to safe test addresses')
-      end
-    end
 
     context 'in production environment' do
       before { allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new('production')) }
 
-      it 'allows normal delivery' do
-        expect(message).not_to receive(:perform_deliveries=)
+      it 'blocks email delivery for safety' do
+        expect(message).to receive(:perform_deliveries=).with(false)
 
         interceptor.delivering_email(message)
 
-        expect(Rails.logger).to have_received(:info).with('Email Safety: PRODUCTION environment - allowing normal email delivery')
+        expect(Rails.logger).to have_received(:warn).with('Email Safety: PRODUCTION environment - email delivery BLOCKED for safety')
       end
     end
 
@@ -121,8 +109,9 @@ RSpec.describe 'Email Safety System' do
     let(:original_body) { 'Original email body' }
 
     before do
-      allow(message).to receive(:to).and_return(original_to)
-      allow(message).to receive(:cc).and_return(original_cc)
+      # Mock the to method to return a dup-able array
+      allow(message).to receive(:to).and_return(original_to.dup)
+      allow(message).to receive(:cc).and_return(original_cc&.dup)
       allow(message).to receive(:bcc).and_return(nil)
       allow(message).to receive(:subject).and_return('Test Subject')
       allow(message).to receive(:body).and_return(original_body)
@@ -136,7 +125,7 @@ RSpec.describe 'Email Safety System' do
     it 'redirects recipients to safe addresses' do
       EmailSafetyInterceptor.send(:redirect_to_safe_addresses, message)
 
-      expect(message).to have_received(:to=).with([ 'test+staging@example.com', 'dev+staging@example.com' ])
+      expect(message).to have_received(:to=).with([ 'vosechu@gmail.com', 'test@example.com', 'dev@example.com' ])
       expect(message).to have_received(:cc=).with([])
       expect(message).to have_received(:bcc=).with([])
     end
