@@ -38,6 +38,11 @@ end
 Capybara.register_driver :chrome_with_console do |app|
   options = Selenium::WebDriver::Options.chrome
   options.add_option('goog:loggingPrefs', { browser: 'ALL' })
+  # Run in headless mode so no browser window pops during tests (Chrome 109+ flag)
+  options.add_argument('--headless=new')
+  options.add_argument('--disable-gpu')
+  options.add_argument('--no-sandbox')
+
   Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
 end
 

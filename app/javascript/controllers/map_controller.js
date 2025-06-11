@@ -11,23 +11,37 @@ function fromWebMercator([x, y]) {
 }
 
 export default class extends Controller {
+  static targets = [
+    "canvas",
+    "searchInput",
+    "newResidentsToggle"
+  ]
+
+  static values = {
+    newResidentDays: { type: Number, default: 30 }
+  }
+
   connect() {
     console.log("Map controller connected")
 
-    this.map = L.map(this.element).setView([27.77441168140785, -82.72030234336854], 17)
+    // Initialize Leaflet map on the dedicated canvas target (not the controller root)
+    this.map = L.map(this.canvasTarget).setView([27.77441168140785, -82.72030234336854], 17)
     window.map = this.map
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors"
-    }).addTo(map)
+    }).addTo(this.map)
 
+    // Load all houses and cache their data + polygon for filtering later
+    this.houses = [];
     fetch("/api/houses")
       .then(res => res.json())
       .then(data => {
         data.forEach((house) => {
           this.addHousePolygon(house);
-        })
-      })
+        });
+        this.updateHighlight();
+      });
 
     // Add Escape key handler
     this._handleEscape = (e) => {
@@ -64,6 +78,13 @@ export default class extends Controller {
         this.addHousePopup(house);
         // TODO: Attach modal actions to the edit buttons
       });
+
+      // Attach polygon to house for later styling / searching
+      house.polygon = polygon;
+      this.houses.push(house);
+
+      // Add to map initially; filtering will toggle later
+      polygon.addTo(this.map);
     }
   }
 
@@ -296,5 +317,55 @@ export default class extends Controller {
         }, 300);
       }, 1000);
     }
+  }
+
+  // ============== Search Highlighting =================
+  updateHighlight() {
+    const query = (this.hasSearchInputTarget ? this.searchInputTarget.value : '').trim().toLowerCase();
+    const filterNew = this.hasNewResidentsToggleTarget ? this.newResidentsToggleTarget.checked : false;
+
+    if (!this.houses) return;
+
+    const now = new Date();
+    const cutoff = new Date(now);
+    cutoff.setDate(now.getDate() - this.newResidentDaysValue);
+
+    this.houses.forEach((house) => {
+      const address = `${house.street_number} ${house.street_name}`.toLowerCase();
+
+      const residents = house.residents || [];
+
+      const residentMatch = residents.some(r => {
+        return (r.display_name && r.display_name.toLowerCase().includes(query)) ||
+               (r.official_name && r.official_name.toLowerCase().includes(query));
+      });
+
+      const matchesSearch = query === '' ? true : (address.includes(query) || residentMatch);
+
+      const hasNewResident = residents.some(r => {
+        if (!r.first_seen_at) return false;
+        const firstSeen = new Date(r.first_seen_at);
+        return firstSeen >= cutoff;
+      });
+
+      const matchesNew = filterNew ? hasNewResident : true;
+
+      const isMatch = matchesSearch && matchesNew;
+
+      if (house.polygon) {
+        if (isMatch) {
+          house.polygon.setStyle({ color: '#3388ff', fillOpacity: 0.5, weight: 2 });
+          if (!this.map.hasLayer(house.polygon)) {
+            house.polygon.addTo(this.map);
+          }
+        } else {
+          house.polygon.setStyle({ color: '#cccccc', fillOpacity: 0.1, weight: 1 });
+        }
+      }
+    });
+  }
+
+  applySearch() {
+    this.updateHighlight();
   }
 }

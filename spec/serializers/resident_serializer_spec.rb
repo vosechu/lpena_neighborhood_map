@@ -43,4 +43,16 @@ RSpec.describe ResidentSerializer do
     json = ResidentSerializer.new(resident).as_json
     expect(json).to be_empty
   end
+
+  describe '#as_json' do
+    let(:resident) { build_stubbed(:resident, hidden: false, first_seen_at: Time.zone.now) }
+
+    it 'includes hidden state and first_seen_at metadata' do
+      json = described_class.new(resident).as_json
+      expect(json).to include(
+        hidden: false,
+        first_seen_at: resident.first_seen_at
+      )
+    end
+  end
 end
