@@ -9,10 +9,59 @@ on:
 permissions:
   contents: read
 
+# Define common configuration as reusable anchors
+x-postgres-service: &postgres-service
+  postgres:
+    image: postgres:15
+    env:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: lpena_neighborhood_map_test
+    ports: [ '5432:5432' ]
+    options: >-
+      --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5
+
+x-test-env: &test-env
+  RAILS_ENV: test
+  DATABASE_URL: postgres://postgres:postgres@localhost:5432/lpena_neighborhood_map_test
+
+x-ruby-setup: &ruby-setup
+  - name: Checkout code
+    uses: actions/checkout@v4
+
+  - name: Set up Ruby
+    uses: ruby/setup-ruby@v1
+    with:
+      ruby-version: .ruby-version
+      bundler-cache: true
+
+  - name: Install system dependencies
+    run: sudo apt-get update -y && sudo apt-get install -y libpq-dev
+
+  - name: Prepare database
+    run: bin/rails db:prepare
+
+x-feature-setup: &feature-setup
+  - name: Checkout code
+    uses: actions/checkout@v4
+
+  - name: Set up Ruby
+    uses: ruby/setup-ruby@v1
+    with:
+      ruby-version: .ruby-version
+      bundler-cache: true
+
+  - name: Install system dependencies
+    run: |
+      sudo apt-get update -y
+      sudo apt-get install -y libpq-dev chromium-browser
+
+  - name: Prepare database
+    run: bin/rails db:prepare
+
 jobs:
   scan_ruby:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,119 +93,33 @@ jobs:
   test_unit:
     runs-on: ubuntu-latest
     needs: [scan_ruby, lint]
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: lpena_neighborhood_map_test
-        ports: [ '5432:5432' ]
-        options: >-
-          --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5
-
-    env:
-      RAILS_ENV: test
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/lpena_neighborhood_map_test
-
+    services: *postgres-service
+    env: *test-env
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
-
-      - name: Install system dependencies
-        run: sudo apt-get update -y && sudo apt-get install -y libpq-dev
-
-      - name: Prepare database
-        run: bin/rails db:prepare
-
+      - <<: *ruby-setup
       - name: Run Unit Specs
-        run: bundle exec rspec spec/models spec/helpers spec/lib --format documentation
+        run: bundle exec rspec --tag type:model --tag type:service --tag type:mailer --tag type:serializer --format documentation
 
   test_request:
     runs-on: ubuntu-latest
     needs: [scan_ruby, lint]
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: lpena_neighborhood_map_test
-        ports: [ '5432:5432' ]
-        options: >-
-          --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5
-
-    env:
-      RAILS_ENV: test
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/lpena_neighborhood_map_test
-
+    services: *postgres-service
+    env: *test-env
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
-
-      - name: Install system dependencies
-        run: sudo apt-get update -y && sudo apt-get install -y libpq-dev
-
-      - name: Prepare database
-        run: bin/rails db:prepare
-
+      - <<: *ruby-setup
       - name: Run Request Specs
-        run: bundle exec rspec spec/requests --format documentation
+        run: bundle exec rspec --tag type:request --format documentation
 
   # Feature specs are disabled as they don't work on GitHub Actions right now
   # test_feature:
   #   runs-on: ubuntu-latest
   #   needs: [scan_ruby, lint]
-  #
-  #   services:
-  #     postgres:
-  #       image: postgres:15
-  #       env:
-  #         POSTGRES_USER: postgres
-  #         POSTGRES_PASSWORD: postgres
-  #         POSTGRES_DB: lpena_neighborhood_map_test
-  #       ports: [ '5432:5432' ]
-  #       options: >-
-  #         --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5
-  #
-  #   env:
-  #     RAILS_ENV: test
-  #     DATABASE_URL: postgres://postgres:postgres@localhost:5432/lpena_neighborhood_map_test
-  #
+  #   services: *postgres-service
+  #   env: *test-env
   #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Set up Ruby
-  #       uses: ruby/setup-ruby@v1
-  #       with:
-  #         ruby-version: .ruby-version
-  #         bundler-cache: true
-  #
-  #     - name: Install system dependencies
-  #       run: |
-  #         sudo apt-get update -y
-  #         sudo apt-get install -y libpq-dev chromium-browser
-  #
-  #     - name: Prepare database
-  #       run: bin/rails db:prepare
-  #
+  #     - <<: *feature-setup
   #     - name: Run Feature Specs
-  #       run: bundle exec rspec spec/system --format documentation
+  #       run: bundle exec rspec --tag type:feature --format documentation
   #
   #     - name: Keep screenshots from failed system tests
   #       uses: actions/upload-artifact@v4
