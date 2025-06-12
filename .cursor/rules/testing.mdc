@@ -7,6 +7,11 @@ alwaysApply: true
 
 - ALWAYS run the specs and rubocop after changes
 - ALL changes require new specs to be written (or request specs to be modified)
+- Run utilities with these commands:
+  + For unit, request, and feature specs: `bin/rspec` or `bin/rspec <filename>[:<filenumber>]
+  + For linting: `bin/rubocop`
+  + For other things like migrations `RAILS_ENV=test bin/rails`
+  + You CANNOT run `bin/rails console`, it does not work. Use `bin/rails runner` instead
 
 ## RSpec Best Practices
 - Follow Sandi Metz's testing principles

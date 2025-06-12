@@ -3,12 +3,10 @@
 
 Rails.logger.info "Email Safety: Loading email safety initializer in #{Rails.env} environment"
 
-# Only allow real email delivery in production
-unless Rails.env.production?
-  Rails.logger.info "Email Safety: Non-production environment detected (#{Rails.env}). Email safety measures activated."
-end
+# Email delivery is currently disabled in ALL environments for safety
+Rails.logger.info "Email Safety: Email safety measures activated in #{Rails.env} environment."
 
-# Email interceptor for development/staging environments
+# Email interceptor for all environments (production emails blocked for safety)
 class EmailSafetyInterceptor
   def self.delivering_email(message)
     # Log all outgoing emails for debugging
@@ -25,14 +23,10 @@ class EmailSafetyInterceptor
       Rails.logger.info 'Email Safety: DEVELOPMENT environment - email redirected to file system'
       # Emails are already configured to go to files in development.rb
 
-    when 'staging'
-      # Staging environment - redirect to safe test addresses
-      Rails.logger.warn 'Email Safety: STAGING environment - redirecting emails to safe test addresses'
-      redirect_to_safe_addresses(message)
-
     when 'production'
-      # Production environment - allow normal delivery but log it
-      Rails.logger.info 'Email Safety: PRODUCTION environment - allowing normal email delivery'
+      # Production environment - BLOCKING email delivery for safety
+      Rails.logger.warn 'Email Safety: PRODUCTION environment - email delivery BLOCKED for safety'
+      message.perform_deliveries = false
 
     else
       # Unknown environment - block all emails as safety measure
@@ -50,8 +44,9 @@ class EmailSafetyInterceptor
 
     # Define safe test email addresses
     safe_addresses = [
-      'test+staging@example.com',
-      'dev+staging@example.com'
+      'vosechu@gmail.com',
+      'test@example.com',
+      'dev@example.com'
     ]
 
     # Redirect all recipients to safe addresses
@@ -77,9 +72,9 @@ class EmailSafetyInterceptor
   end
 end
 
-# Register the interceptor for non-production environments
-unless Rails.env.production?
-  Rails.logger.info "Email Safety: Registering EmailSafetyInterceptor for #{Rails.env} environment"
-  ActionMailer::Base.register_interceptor(EmailSafetyInterceptor)
-  Rails.logger.info "Email Safety: Interceptor registered. Current interceptors: #{ActionMailer::Base.instance_variable_get(:@mail_interceptors) || []}"
+# Register the interceptor using Rails configuration (Rails 6.1+ compatible approach)
+Rails.application.configure do
+  config.action_mailer.interceptors = [ 'EmailSafetyInterceptor' ]
 end
+
+Rails.logger.info "Email Safety: EmailSafetyInterceptor configured for #{Rails.env} environment"

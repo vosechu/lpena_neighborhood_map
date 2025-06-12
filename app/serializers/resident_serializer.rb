@@ -17,6 +17,9 @@ class ResidentSerializer
     info[:homepage] = @resident.homepage
     info[:skills] = @resident.skills
     info[:comments] = @resident.comments
+    info[:hidden] = @resident.hidden
+    info[:email_notifications_opted_out] = @resident.email_notifications_opted_out
+    info[:first_seen_at] = @resident.first_seen_at
     info
   end
 end

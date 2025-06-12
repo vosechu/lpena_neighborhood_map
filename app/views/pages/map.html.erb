@@ -1,1 +1,15 @@
-<div data-controller="map" class="map-fullscreen"></div>
+<div data-controller="map" class="relative w-full h-full">
+  <!-- Filter Controls -->
+  <div id="map-search" class="absolute top-4 left-4 z-50 bg-white/90 backdrop-blur-sm rounded-lg shadow p-4">
+    <input type="text" placeholder="Search address or resident name…" data-map-target="searchInput" data-action="input->map#applySearch" class="w-64 border-gray-300 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+    <div class="mt-2">
+      <label class="text-sm font-medium inline-flex items-center gap-2">
+        <input type="checkbox" data-map-target="newResidentsToggle" data-action="change->map#updateHighlight" class="rounded" />
+        New residents (30 days)
+      </label>
+    </div>
+  </div>
+
+  <!-- Map Container -->
+  <div data-map-target="canvas" class="map-fullscreen"></div>
+</div>
