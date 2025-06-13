@@ -56,6 +56,9 @@ export default class extends Controller {
       }
     };
     document.addEventListener('keydown', this._handleEscape);
+
+    // Admin flag from dataset
+    this.isAdmin = this.element.dataset.mapAdminValue === 'true';
   }
 
   disconnect() {
@@ -95,94 +98,185 @@ export default class extends Controller {
       keepInView: true,
       autoPan: true
     }).setLatLng([house.latitude, house.longitude]).setContent(this.renderHouseAndResidentsDetails(house));
-    // Add event listeners after the popup content is added to the DOM
-    setTimeout(() => {
-      // Handle house edit buttons (all, in case there are multiple)
-      const editHouseBtns = document.querySelectorAll('.house-name .edit-house-btn');
-      editHouseBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          // Show a placeholder modal for house editing
-          const modalEl = document.getElementById('modal');
-          modalEl.innerHTML = `
-            <div class="p-6">
-              <h3 class="text-lg font-semibold mb-4">Edit House Details</h3>
-              <p class="text-gray-600">(House editing form coming soon!)</p>
-              <div class="mt-6 flex justify-end">
-                <button class="close-modal-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded" onclick="document.getElementById('modal').style.display='none'">Close</button>
-              </div>
-            </div>
-          `;
-          modalEl.style.display = 'block';
-        });
-      });
-
-      // Handle resident edit buttons
-      const editResidentBtns = document.querySelectorAll('.resident-name .edit-resident-btn');
-      editResidentBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const residentId = e.target.closest('button').dataset.residentId;
-          const resident = house.residents.find(r => r.id === parseInt(residentId));
-
-          if (resident) {
-            const modalEl = document.getElementById('modal');
-            const templateHtml = document.getElementById('resident-edit-form-template').innerHTML;
-            const compiled = _.template(templateHtml);
-            modalEl.innerHTML = compiled({ resident });
-            modalEl.style.display = 'block';
-
-            // Add save button handler after modal content is set
-            this.attachResidentFormHandlers(resident, house);
-          }
-        });
-      });
-
-      // Handle add resident button
-      const addResidentBtn = document.querySelector('.add-resident-btn');
-      if (addResidentBtn) {
-        addResidentBtn.addEventListener('click', () => {
-          // TODO: Implement add resident form template and handler
-        });
-      }
-    }, 0);
     popup.openOn(this.map);
+
+    // Once popup is in the DOM attach listeners immediately (no async timeout)
+    const popupEl = popup.getElement();
+    if (popupEl) {
+      this.bindHousePopupListeners(popupEl, house);
+    }
+  }
+
+  // Attach edit/add buttons inside popup
+  bindHousePopupListeners(popupEl, house) {
+    // Edit resident buttons
+    popupEl.querySelectorAll('.resident-name .edit-resident-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const residentId = e.currentTarget.dataset.residentId;
+        const resident = house.residents.find(r => r.id === parseInt(residentId));
+        if (!resident) return;
+
+        const modalEl = document.getElementById('modal');
+        const templateHtml = document.getElementById('resident-edit-form-template').innerHTML;
+        modalEl.innerHTML = _.template(templateHtml)({ resident });
+        modalEl.style.display = 'block';
+        this.attachResidentFormHandlers(resident, house);
+      });
+    });
+
+    // Add resident button (there is only one)
+    const addBtn = popupEl.querySelector('.add-resident-btn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => this.showAddResidentModal(house));
+    }
   }
 
   renderHouseAndResidentsDetails(house) {
     const templateHtml = document.getElementById('house-edit-form-template').innerHTML;
     const compiled = _.template(templateHtml);
-    return compiled({ house });
+    return compiled({ house, isAdmin: this.isAdmin });
   }
 
   attachResidentFormHandlers(resident, house) {
-    // Wait for next tick to ensure DOM is ready
-    setTimeout(() => {
-      const saveBtn = document.querySelector('.save-resident-btn');
+    const modalEl = document.getElementById('modal');
+
+    // Save button
+    const saveBtn = modalEl.querySelector('.save-resident-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.saveResident(resident, house);
+      });
+    }
+
+    // Homepage normalization
+    const homepageField = modalEl.querySelector('#resident-homepage');
+    if (homepageField) {
+      homepageField.addEventListener('blur', (e) => this.normalizeHomepageUrl(e.target));
+    }
+
+    // Close modal on backdrop click
+    modalEl.addEventListener('click', (e) => {
+      if (e.target === modalEl) modalEl.style.display = 'none';
+    });
+  }
+
+  showAddResidentModal(house) {
+    const modalEl = document.getElementById('modal');
+    const templateHtml = document.getElementById('add-resident-form-template').innerHTML;
+    modalEl.innerHTML = _.template(templateHtml)({ house });
+    modalEl.style.display = 'block';
+    this.attachAddResidentFormHandlers(house);
+  }
+
+  attachAddResidentFormHandlers(house) {
+    const modalEl = document.getElementById('modal');
+
+    const saveBtn = modalEl.querySelector('.add-resident-save-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.addNewResident(house);
+      });
+    }
+
+    const homepageField = modalEl.querySelector('#resident-homepage');
+    if (homepageField) {
+      homepageField.addEventListener('blur', (e) => this.normalizeHomepageUrl(e.target));
+    }
+
+    modalEl.addEventListener('click', (e) => {
+      if (e.target === modalEl) modalEl.style.display = 'none';
+    });
+  }
+
+  addNewResident(house) {
+    const modalEl = document.getElementById('modal');
+
+    // Normalize homepage URL before saving
+    const homepageField = modalEl.querySelector('#resident-homepage');
+    if (homepageField) {
+      this.normalizeHomepageUrl(homepageField);
+    }
+
+    // Collect form data
+    const formData = { house_id: house.id };
+    const formFields = modalEl.querySelectorAll('[data-resident-field]');
+
+    formFields.forEach(field => {
+      const fieldName = field.dataset.residentField;
+      formData[fieldName] = field.value;
+    });
+
+    // Validate required fields
+    if (!formData.display_name || formData.display_name.trim() === '') {
+      this.showErrorMessage('Name is required.');
+      return;
+    }
+
+    // If official_name not provided (no longer collected from UI), default to display_name
+    if (!formData.official_name) {
+      formData.official_name = formData.display_name;
+    }
+
+    // Disable save button and show loading state
+    const saveBtn = modalEl.querySelector('.add-resident-save-btn');
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Adding...';
+    }
+
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken.getAttribute('content');
+    }
+
+    // Make API call to create resident
+    fetch('/api/residents', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ resident: formData })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(newResident => {
+      console.log('Resident created successfully:', newResident);
+
+      // Add new resident to house object
+      house.residents = house.residents || [];
+      house.residents.push(newResident);
+
+      // Close modal
+      modalEl.style.display = 'none';
+
+      // Update popup content with new data
+      this.map.closePopup();
+      this.addHousePopup(house);
+
+      // Show success message
+      this.showSuccessMessage('Resident added successfully!');
+    })
+    .catch(error => {
+      console.error('Error creating resident:', error);
+
+      // Re-enable save button
       if (saveBtn) {
-        saveBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.saveResident(resident, house);
-        });
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Add Resident';
       }
 
-      // Add homepage URL normalization
-      const homepageField = document.querySelector('#resident-homepage');
-      if (homepageField) {
-        homepageField.addEventListener('blur', (e) => {
-          this.normalizeHomepageUrl(e.target);
-        });
-      }
-
-      // Add cancel/close handlers
-      const modalEl = document.getElementById('modal');
-      if (modalEl) {
-        // Close on background click
-        modalEl.addEventListener('click', (e) => {
-          if (e.target === modalEl) {
-            modalEl.style.display = 'none';
-          }
-        });
-      }
-    }, 0);
+      // Show error message
+      this.showErrorMessage('Failed to add resident. Please try again.');
+    });
   }
 
   saveResident(resident, house) {
