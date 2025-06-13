@@ -92,4 +92,82 @@ RSpec.describe 'Api::ResidentsController', type: :request do
       end
     end
   end
+
+  describe 'POST /api/residents' do
+    let(:house) { create(:house) }
+    let(:valid_params) {
+      {
+        resident: {
+          house_id: house.id,
+          display_name: 'New Resident',
+          email: 'new@example.com',
+          phone: '555-1234'
+        }
+      }
+    }
+
+    it 'creates a new resident successfully' do
+      expect {
+        post '/api/residents', params: valid_params
+      }.to change(Resident, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+
+      json_response = JSON.parse(response.body)
+      expect(json_response['display_name']).to eq('New Resident')
+      expect(json_response['email']).to eq('new@example.com')
+      expect(json_response['phone']).to eq('555-1234')
+      expect(json_response['official_name']).to eq('New Resident')
+    end
+
+    it 'creates a user when email is provided' do
+      expect {
+        post '/api/residents', params: valid_params
+      }.to change(User, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+
+      created_resident = Resident.last
+      expect(created_resident.user).to be_present
+      expect(created_resident.user.email).to eq('new@example.com')
+      expect(created_resident.official_name).to eq('New Resident')
+    end
+
+    context 'with invalid data' do
+      let(:invalid_params) {
+        {
+          resident: {
+            house_id: house.id,
+            display_name: '' # Empty name
+          }
+        }
+      }
+
+      it 'returns validation errors' do
+        expect {
+          post '/api/residents', params: invalid_params
+        }.not_to change(Resident, :count)
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+
+    context 'with missing house_id' do
+      let(:invalid_params) {
+        {
+          resident: {
+            display_name: 'New Resident'
+          }
+        }
+      }
+
+      it 'returns validation errors' do
+        expect {
+          post '/api/residents', params: invalid_params
+        }.not_to change(Resident, :count)
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
 end
