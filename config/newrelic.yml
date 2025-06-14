@@ -1,0 +1,38 @@
+common: &default_settings
+  license_key: '<%= ENV["NEW_RELIC_LICENSE_KEY"] %>'
+  monitor_mode: true
+  log_level: info
+  ssl: true
+  transaction_tracer:
+    enabled: true
+    transaction_threshold: apdex_f
+    record_sql: obfuscated
+    stack_trace_threshold: 0.1
+  error_collector:
+    enabled: true
+    ignore_errors: "ActionController::RoutingError,Sinatra::NotFound,ActiveRecord::RecordNotFound"
+
+development:
+  <<: *default_settings
+  monitor_mode: false
+  app_name: 'LPENA Neighborhood Map (Development)'
+  log_level: debug
+  transaction_tracer:
+    enabled: true
+    transaction_threshold: 4.0
+    record_sql: raw
+    stack_trace_threshold: 0.1
+
+production:
+  <<: *default_settings
+  monitor_mode: true
+  app_name: '<%= ENV.fetch("NEW_RELIC_APP_NAME", "LPENA Neighborhood Map") %>'
+  log_level: info
+  transaction_tracer:
+    enabled: true
+    transaction_threshold: apdex_f
+    record_sql: raw
+    stack_trace_threshold: 0.1
+  error_collector:
+    enabled: true
+    ignore_errors: "ActionController::RoutingError,Sinatra::NotFound,ActiveRecord::RecordNotFound"
