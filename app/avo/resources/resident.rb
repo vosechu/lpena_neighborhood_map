@@ -26,7 +26,7 @@ class Avo::Resources::Resident < Avo::BaseResource
     field :homepage, as: :text, as_html: true
 
     # Personal Info
-    field :birthdate, as: :date, sortable: true
+    field :birthdate, as: :text, sortable: true, help: 'Format: MM-DD (e.g., 03-15 for March 15th)'
     field :welcomed_on, as: :date, sortable: true
 
     # Privacy Settings

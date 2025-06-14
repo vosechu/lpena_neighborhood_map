@@ -35,6 +35,12 @@ class ResidentSerializer
       info[:phone] = @resident.phone if @resident.phone.present?
     end
     info[:hide_phone] = @resident.hide_phone
+    if (@resident.hidden? || @resident.hide_birthdate) && !can_view_hidden?
+      info[:birthdate] = '(hidden by user)'
+    else
+      info[:birthdate] = @resident.birthdate if @resident.birthdate.present?
+    end
+    info[:hide_birthdate] = @resident.hide_birthdate
     info[:homepage] = @resident.homepage
     info[:skills] = @resident.skills
     info[:comments] = @resident.comments

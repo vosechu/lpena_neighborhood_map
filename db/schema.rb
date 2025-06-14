@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_08_182223) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_13_193534) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -33,7 +33,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_08_182223) do
 
   create_table "residents", force: :cascade do |t|
     t.bigint "house_id", null: false
-    t.string "official_name", null: false
+    t.string "official_name"
     t.string "secondary_official_name"
     t.datetime "first_seen_at", null: false
     t.datetime "last_seen_at"
@@ -43,7 +43,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_08_182223) do
     t.string "display_name"
     t.string "phone"
     t.string "email"
-    t.date "birthdate"
+    t.string "birthdate"
     t.date "welcomed_on"
     t.boolean "public_visibility", default: false, null: false
     t.bigint "user_id"

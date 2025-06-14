@@ -24,6 +24,9 @@ export default class extends Controller {
   connect() {
     console.log("Map controller connected")
 
+    // Make formatBirthdate available globally for templates
+    window.formatBirthdate = this.formatBirthdate.bind(this)
+
     // Initialize Leaflet map on the dedicated canvas target (not the controller root)
     this.map = L.map(this.canvasTarget).setView([27.77441168140785, -82.72030234336854], 17)
     window.map = this.map
@@ -519,5 +522,27 @@ export default class extends Controller {
 
   applySearch() {
     this.updateHighlight();
+  }
+
+  // Format MM-DD birthdate to month name using modern JS Intl API
+  formatBirthdate(mmdd) {
+    if (!mmdd || mmdd === '(hidden by user)') return mmdd;
+
+    const parts = mmdd.split('-');
+    if (parts.length !== 2) return mmdd;
+
+    const month = parseInt(parts[0], 10);
+    const day = parseInt(parts[1], 10);
+
+    // Validate month and day ranges
+    if (month < 1 || month > 12 || day < 1 || day > 31) return mmdd;
+
+    // Use a dummy year (2000) to create a valid date for formatting
+    const date = new Date(2000, month - 1, day);
+
+    // Use Intl.DateTimeFormat to get the month name
+    const monthName = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(date);
+
+    return `${monthName} ${day}`;
   }
 }

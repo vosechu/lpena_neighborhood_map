@@ -19,7 +19,7 @@ class Resident < ApplicationRecord
   # Optional personal info
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :phone, format: { with: /\A\+?[\d\s\-\(\)]+\z/ }, allow_blank: true
-  validates :birthdate, comparison: { less_than: -> { Date.current } }, allow_nil: true
+  validates :birthdate, format: { with: /\A(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\z/, message: 'must be in MM-DD format' }, allow_blank: true
 
   # Privacy settings - now using hide_* fields (DB default is false)
   # attribute :hide_email, :boolean
