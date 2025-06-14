@@ -24,9 +24,13 @@ class EmailSafetyInterceptor
       # Emails are already configured to go to files in development.rb
 
     when 'production'
-      # Production environment - BLOCKING email delivery for safety
-      Rails.logger.warn 'Email Safety: PRODUCTION environment - email delivery BLOCKED for safety'
-      message.perform_deliveries = false
+      # Production environment - allow email delivery only if explicitly enabled via ENV flag
+      if ENV['ALLOW_PROD_EMAILS'] == 'true'
+        Rails.logger.info 'Email Safety: PRODUCTION environment - email delivery ALLOWED (ALLOW_PROD_EMAILS=true)'
+      else
+        Rails.logger.warn 'Email Safety: PRODUCTION environment - email delivery BLOCKED (set ALLOW_PROD_EMAILS=true to enable)'
+        message.perform_deliveries = false
+      end
 
     else
       # Unknown environment - block all emails as safety measure
