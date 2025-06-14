@@ -62,37 +62,44 @@ Notes
 ```ruby
 require 'rails_helper'
 
-RSpec.describe 'Avo Integration', type: :request do
-  # We would prefer not to create database objects, but these are needed for logging in
-  let(:user) { create(:user) }
-  let(:house) { create(:house) }
-  let(:resident) { create(:resident, house: house) }
+# Controller-level test that avoids hitting the DB except for Devise’s user.
+RSpec.describe Api::ResidentsController, type: :request do
+  let(:user) { create(:user) }                  # the one unavoidable DB record
+  let(:resident_id) { 42 }                      # any ID; no record exists
+  let(:resident) { instance_double(Resident, id: resident_id) }
 
-  describe 'Avo Dashboard' do
-    context 'when authenticated' do
-      before do
-        post user_session_path, params: { user: { email: user.email, password: user.password } }
-      end
+  before do
+    sign_in user                                # Devise helper
 
-      it 'renders the avo dashboard' do
-        get '/avo'
-        # Avo redirects to the first resource by default
-        expect(response).to redirect_to('/avo/resources/houses')
-      end
+    # Stub the lookup the controller does in before_action :set_resident
+    allow(Resident).to receive(:find).with(resident_id.to_s).and_return(resident)
+  end
+
+  describe 'PATCH /api/residents/:id' do
+    let(:params) { { resident: { display_name: 'New Name' } } }
+
+    it 'delegates to the update service and returns 200' do
+      service_double = instance_double(ResidentUpdateService, call: true)
+      allow(ResidentUpdateService).to receive(:new)
+        .with(resident, params[:resident])
+        .and_return(service_double)
+
+      patch "/api/residents/#{resident_id}", params: params
+
+      expect(response).to have_http_status(:ok)
+      expect(service_double).to have_received(:call)
     end
+  end
 
-    describe 'ResidentStatusFilter' do
-      let(:filter) { Avo::Filters::ResidentStatusFilter.new }
-      let(:base_query) { instance_double('ActiveRecord::Relation') }
-      let(:where_query) { instance_double('ActiveRecord::Relation') }
-      let(:where_not_query) { instance_double('ActiveRecord::Relation') }
+  describe 'GET /api/residents/:id' do
+    it 'serialises and returns the resident' do
+      serializer_double = instance_double(ResidentSerializer, as_json: { id: resident_id, display_name: 'Stub Name' })
+      allow(ResidentSerializer).to receive(:new).with(resident).and_return(serializer_double)
 
-      it 'filters for current residents' do
-        allow(base_query).to receive(:where).with(last_seen_at: nil, hidden: [ false, nil ]).and_return([ 'current_resident' ])
+      get "/api/residents/#{resident_id}"
 
-        result = filter.apply(nil, base_query, [ 'current' ])
-        expect(result).to eq([ 'current_resident' ])
-      end
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)).to eq('id' => 42, 'display_name' => 'Stub Name')
     end
   end
 end
