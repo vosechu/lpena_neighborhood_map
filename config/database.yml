@@ -19,6 +19,12 @@ default: &default
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
+# This is used during asset precompilation
+dummy: &dummy
+  adapter: postgresql
+  encoding: unicode
+  pool: 1
+  database: dummy_db
 
 development:
   <<: *default
@@ -119,3 +125,7 @@ production:
     statement_limit: 1000
     sslmode: require
     migrations_paths: db/cable_migrate
+
+# This environment is used during asset precompilation
+assets:
+  <<: *dummy
