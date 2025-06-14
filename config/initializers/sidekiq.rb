@@ -1,5 +1,6 @@
 require 'sidekiq'
 require 'sidekiq-scheduler'
+require 'newrelic_rpm'
 
 Sidekiq.configure_server do |config|
   config.redis = { url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0') }

@@ -251,6 +251,7 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     net-ssh (7.3.0)
+    newrelic_rpm (9.19.0)
     nio4r (2.7.4)
     nokogiri (1.18.8-aarch64-linux-gnu)
       racc (~> 1.4)
@@ -519,6 +520,7 @@ DEPENDENCIES
   importmap-rails (~> 2.1)
   jbuilder
   kamal
+  newrelic_rpm
   pg (~> 1.1)
   propshaft
   puma (>= 5.0)
