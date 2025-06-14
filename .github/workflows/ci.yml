@@ -72,7 +72,7 @@ jobs:
         run: bin/rails db:prepare
 
       - name: Run Unit Specs
-        run: bundle exec rspec --tag type:model --tag type:service --tag type:mailer --tag type:serializer --format documentation
+        run: bin/rspec --tag type:model --tag type:service --tag type:mailer --tag type:serializer --format documentation
 
   test_request:
     runs-on: ubuntu-latest
@@ -106,48 +106,42 @@ jobs:
         run: bin/rails db:prepare
 
       - name: Run Request Specs
-        run: bundle exec rspec --tag type:request --format documentation
+        run: bin/rspec --tag type:request --format documentation
 
-  # test_feature:
-  #   runs-on: ubuntu-latest
-  #   services:
-  #     postgres:
-  #       image: postgres:15
-  #       env:
-  #         POSTGRES_USER: postgres
-  #         POSTGRES_PASSWORD: postgres
-  #         POSTGRES_DB: lpena_neighborhood_map_test
-  #       ports: [ '5432:5432' ]
-  #       options: >-
-  #         --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5
-  #   env:
-  #     RAILS_ENV: test
-  #     DATABASE_URL: postgres://postgres:postgres@localhost:5432/lpena_neighborhood_map_test
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+  test_feature:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lpena_neighborhood_map_test
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/lpena_neighborhood_map_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
 
-  #     - name: Set up Ruby
-  #       uses: ruby/setup-ruby@v1
-  #       with:
-  #         ruby-version: .ruby-version
-  #         bundler-cache: true
+      - name: Install system dependencies (for headless Chrome)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libpq-dev chromium-browser
 
-  #     - name: Install system dependencies
-  #       run: |
-  #         sudo apt-get update -y
-  #         sudo apt-get install -y libpq-dev chromium-browser
+      - name: Prepare database
+        run: bin/rails db:prepare
 
-  #     - name: Prepare database
-  #       run: bin/rails db:prepare
+      - name: Run Feature Specs (with screenshot capture on failure)
+        run: bin/rspec --tag type:feature --format documentation
 
-  #     - name: Run Feature Specs
-  #       run: bundle exec rspec --tag type:feature --format documentation
-
-  #     - name: Keep screenshots from failed system tests
-  #       uses: actions/upload-artifact@v4
-  #       if: failure()
-  #       with:
-  #         name: screenshots
-  #         path: ${{ github.workspace }}/tmp/screenshots
-  #         if-no-files-found: ignore
+      - name: Upload Screenshot Artifact (if failure)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: screenshots
+          path: ${{ github.workspace }}/tmp/screenshots
+          if-no-files-found: ignore

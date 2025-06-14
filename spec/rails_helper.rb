@@ -48,6 +48,17 @@ end
 
 Capybara.javascript_driver = :chrome_with_console
 
+# Helper function for taking screenshots on timeout failures
+def screenshot_on_timeout(screenshot_name, description, &block)
+  block.call
+rescue Timeout::Error, RSpec::Expectations::ExpectationNotMetError => e
+  # Create screenshots directory if it doesn't exist
+  FileUtils.mkdir_p('tmp/screenshots')
+  # Take screenshot on timeout/expectation failure
+  page.save_screenshot("tmp/screenshots/#{screenshot_name}.png")
+  raise e, "#{description}: #{e.message} - screenshot saved to tmp/screenshots/#{screenshot_name}.png"
+end
+
 RSpec.configure do |config|
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [

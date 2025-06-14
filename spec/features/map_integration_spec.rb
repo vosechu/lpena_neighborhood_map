@@ -26,10 +26,12 @@ RSpec.feature 'Map core flows', type: :feature, js: true do
     expect(page).to have_selector('.leaflet-container', wait: 2)
 
     # Wait for houses to load asynchronously
-    Timeout.timeout(3) do
-      loop do
-        break if page.evaluate_script('window.map && window.map._layers && Object.values(window.map._layers).filter(l => l instanceof L.Polygon).length > 0')
-        sleep 0.1
+    screenshot_on_timeout('houses_load_timeout', 'Waiting for houses to load on the map') do
+      Timeout.timeout(3) do
+        loop do
+          break if page.evaluate_script('window.map && window.map._layers && Object.values(window.map._layers).filter(l => l instanceof L.Polygon).length > 0')
+          sleep 0.1
+        end
       end
     end
 
@@ -43,7 +45,9 @@ RSpec.feature 'Map core flows', type: :feature, js: true do
     within('.leaflet-popup-content') do
       find('.edit-resident-btn').click
     end
-    expect(page).to have_selector('[data-map-target="modal"]', wait: 2)
+    screenshot_on_timeout('edit_modal_timeout', 'Waiting for edit resident modal to appear after clicking edit button') do
+      expect(page).to have_selector('[data-map-target="modal"]', wait: 2)
+    end
 
     # Change name + homepage (tests URL normalization) and toggle "Hide all information"
     fill_in 'resident-name', with: 'New Name'
@@ -65,7 +69,9 @@ RSpec.feature 'Map core flows', type: :feature, js: true do
     within('.leaflet-popup-content') do
       find('.add-resident-btn').click
     end
-    expect(page).to have_selector('[data-map-target="modal"]', wait: 2)
+    screenshot_on_timeout('add_modal_timeout', 'Waiting for add resident modal to appear after clicking add button') do
+      expect(page).to have_selector('[data-map-target="modal"]', wait: 2)
+    end
 
     fill_in 'resident-name', with: 'Newest Resident'
     fill_in 'resident-email', with: 'newresident@example.com'
