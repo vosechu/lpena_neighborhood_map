@@ -82,19 +82,40 @@ test:
 #
 production:
   primary: &primary_production
-    <<: *default
-    database: lpena_neighborhood_map_production
-    username: lpena_neighborhood_map
-    password: <%= ENV["LPENA_NEIGHBORHOOD_MAP_DATABASE_PASSWORD"] %>
+    url: <%= ENV['DATABASE_URL'] %>
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    encoding: unicode
+    timeout: 5000
+    connect_timeout: 5
+    checkout_timeout: 5
+    reaping_frequency: 10
+    idle_timeout: 300
+    prepared_statements: true
+    statement_limit: 1000
+    sslmode: require
   cache:
-    <<: *primary_production
-    database: lpena_neighborhood_map_production_cache
+    url: <%= ENV['DATABASE_URL'].sub(/\/([^\/]+)$/, '/\1_cache') %>
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    encoding: unicode
+    timeout: 5000
+    connect_timeout: 5
+    checkout_timeout: 5
+    reaping_frequency: 10
+    idle_timeout: 300
+    prepared_statements: true
+    statement_limit: 1000
+    sslmode: require
     migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: lpena_neighborhood_map_production_queue
-    migrations_paths: db/queue_migrate
   cable:
-    <<: *primary_production
-    database: lpena_neighborhood_map_production_cable
+    url: <%= ENV['DATABASE_URL'].sub(/\/([^\/]+)$/, '/\1_cable') %>
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    encoding: unicode
+    timeout: 5000
+    connect_timeout: 5
+    checkout_timeout: 5
+    reaping_frequency: 10
+    idle_timeout: 300
+    prepared_statements: true
+    statement_limit: 1000
+    sslmode: require
     migrations_paths: db/cable_migrate
