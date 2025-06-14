@@ -22,7 +22,7 @@ RSpec.describe ResidentSerializer do
   it "does not include email if hide_email is true" do
     resident.hide_email = true
     json = ResidentSerializer.new(resident).as_json
-    expect(json).not_to have_key(:email)
+    expect(json[:email]).to eq('(hidden by user)')
   end
 
   it "always includes homepage, skills, and comments" do
@@ -32,10 +32,10 @@ RSpec.describe ResidentSerializer do
     expect(json[:comments]).to eq("Nice neighbor")
   end
 
-  it "does not include display_name if hide_display_name is true" do
+  it "shows '(hidden by user)' for display_name if hide_display_name is true" do
     resident.hide_display_name = true
     json = ResidentSerializer.new(resident).as_json
-    expect(json).not_to have_key(:display_name)
+    expect(json[:display_name]).to eq('(hidden by user)')
   end
 
   it "does not include anything if hidden" do

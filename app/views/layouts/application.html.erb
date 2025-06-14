@@ -23,19 +23,20 @@
     <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" %>
     <%= stylesheet_link_tag :app %>
     <%= javascript_importmap_tags %>
+
+    <style>
+      .house-icons-container {
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+    </style>
   </head>
 
   <body>
     <main>
       <%= yield %>
     </main>
-
-    <!-- Hidden modal container to be populated dynamically by Stimulus controllers -->
-    <div id="modal"
-      role="dialog"
-      aria-modal="true"
-      class="fixed top-0 right-0 h-screen w-full md:w-1/3 md:max-w-xl bg-white shadow-2xl p-8 md:rounded-bl-lg transition-width duration-300 overflow-y-auto max-h-screen"
-      style="display:none; z-index:2000;"></div>
 
     <%# JS template for the house edit form %>
     <script type="text/template" id="house-edit-form-template">
@@ -44,12 +45,26 @@
         {{= house.street_number }} {{= house.street_name }}
       </h2>
 
+      {{ if (house.events && house.events.length > 0) { }}
+        <div class="exciting-events bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+          <div class="text-green-800 font-semibold text-sm mb-2">🎉 Exciting things happening here!</div>
+          {{ _.each(house.events, function(event) { }}
+            <div class="text-green-700 text-sm flex items-center gap-2">
+              <span>{{= event.icon }}</span>
+              <span>{{= event.message }}</span>
+            </div>
+          {{ }); }}
+        </div>
+      {{ } }}
+
       <div class="residents-section mt-4">
         <div class="residents-list flex flex-col gap-4">
           {{ _.each(house.residents, function(resident) { }}
             <div class="resident-item flex flex-col gap-2">
-              <div class="resident-name flex items-center gap-2 font-medium text-gray-800" data-resident-field="name">
-                {{ if (!resident.display_name) { }}
+              <div class="resident-name flex items-center gap-2 font-medium text-lg text-gray-800 {{ if (resident.hide_display_name) { }}text-gray-400 italic{{ } }}" data-resident-field="name">
+                {{ if (resident.hide_display_name) { }}
+                  <span>Name: (hidden by user)</span>
+                {{ } else if (!resident.display_name) { }}
                   <span class="text-gray-400">{{= resident.official_name }}</span>
                   <span class="relative group cursor-pointer" tabindex="0" aria-describedby="resident-info-tooltip">
                     <!-- Heroicons: information-circle -->
@@ -63,6 +78,14 @@
                 {{ } else { }}
                   <span>{{= resident.display_name }}</span>
                 {{ } }}
+                {{ if (resident.hide_display_name) { }}
+                  <span class="relative group cursor-pointer" tabindex="0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>
+                    <span class="absolute left-6 top-0 z-10 hidden group-hover:block group-focus-within:block bg-white text-gray-700 text-xs rounded shadow-lg px-3 py-2 w-64">
+                      This user has chosen to hide this detail
+                    </span>
+                  </span>
+                {{ } }}
                 <button class="edit-resident-btn ml-2 p-1 rounded hover:bg-blue-100 focus:outline-none" data-resident-id="{{= resident.id }}" aria-label="Edit Resident">
                   <!-- Heroicons: pencil-square -->
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
@@ -72,20 +95,50 @@
               </div>
               <div class="resident-contact gap-6 text-sm text-gray-600">
                 {{ if (resident.phone) { }}
-                <div class="phone" data-resident-field="phone">
+                <div class="phone flex items-center gap-1 {{ if (resident.hide_phone) { }}text-gray-400 italic{{ } }}" data-resident-field="phone">
                   <span class="font-semibold">Phone:</span> {{= resident.phone }}
+                  {{ if (resident.hide_phone) { }}
+                    <span class="relative group cursor-pointer" tabindex="0">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>
+                      <span class="absolute left-6 top-0 z-10 hidden group-hover:block group-focus-within:block bg-white text-gray-700 text-xs rounded shadow-lg px-3 py-2 w-64">
+                        This user has chosen to hide this detail
+                      </span>
+                    </span>
+                  {{ } }}
                 </div>
                 {{ } }}
                 {{ if (resident.email) { }}
-                <div class="email" data-resident-field="email">
+                <div class="email flex items-center gap-1 {{ if (resident.hide_email) { }}text-gray-400 italic{{ } }}" data-resident-field="email">
                   <span class="font-semibold">Email:</span> {{= resident.email }}
+                  {{ if (resident.hide_email) { }}
+                    <span class="relative group cursor-pointer" tabindex="0">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>
+                      <span class="absolute left-6 top-0 z-10 hidden group-hover:block group-focus-within:block bg-white text-gray-700 text-xs rounded shadow-lg px-3 py-2 w-64">
+                        This user has chosen to hide this detail
+                      </span>
+                    </span>
+                  {{ } }}
                 </div>
                 {{ } }}
+
               </div>
               <div class="resident-details gap-2 text-xs text-gray-500">
+                {{ if (resident.birthdate) { }}
+                <div class="birthdate {{ if (resident.hide_birthdate) { }}text-gray-400 italic{{ } }}" data-resident-field="birthdate">
+                  <span class="font-semibold">Birthday:</span> {{= resident.formatted_birthdate || resident.birthdate }}
+                  {{ if (resident.hide_birthdate) { }}
+                    <span class="relative group cursor-pointer" tabindex="0">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>
+                      <span class="absolute left-6 top-0 z-10 hidden group-hover:block group-focus-within:block bg-white text-gray-700 text-xs rounded shadow-lg px-3 py-2 w-64">
+                        This user has chosen to hide this detail
+                      </span>
+                    </span>
+                  {{ } }}
+                </div>
+                {{ } }}
                 {{ if (resident.homepage) { }}
                 <div class="homepage" data-resident-field="homepage">
-                  <span class="font-semibold">Homepage:</span> {{= resident.homepage }}
+                  <span class="font-semibold">Homepage:</span> <a href="{{= resident.homepage }}" target="_blank" class="underline text-blue-600">{{= resident.homepage }}</a>
                 </div>
                 {{ } }}
                 {{ if (resident.skills) { }}
@@ -109,11 +162,7 @@
           </button>
         </div>
 
-        {{ if (isAdmin) { }}
-        <div class="admin-link mt-4 text-right">
-          <a href="/avo/resources/houses/{{= house.id }}" target="_blank" class="text-blue-600 underline">View in Admin Dashboard</a>
-        </div>
-        {{ } }}
+
       </div>
     </div>
     </script>
@@ -124,23 +173,89 @@
         <h3 class="text-lg font-semibold mb-4">Edit Resident</h3>
         <div class="form-group mb-4">
           <label for="resident-name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-          <input type="text" id="resident-name" data-resident-field="display_name" value="{{= resident.display_name }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
+          <div class="flex items-center gap-2">
+            <input type="text" id="resident-name" data-resident-field="display_name" value="{{= resident.display_name }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" {{ if (resident.hide_display_name || resident.hidden) { }}disabled{{ } }} />
+            {{ if (canHide) { }}
+              <button type="button" class="toggle-hide-btn p-1 rounded hover:bg-gray-100 focus:outline-none" data-target-field="hide_display_name" aria-label="Toggle name visibility">
+                <span class="inline-block w-5 h-5 relative">
+                 <!-- eye icon -->
+                 <svg xmlns="http://www.w3.org/2000/svg" class="icon-eye w-5 h-5 text-gray-500 block absolute inset-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="{{ if (resident.hide_display_name) { }}display:none{{ } }}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s4.5-7.5 9.75-7.5 9.75 7.5 9.75 7.5-4.5 7.5-9.75 7.5S2.25 12 2.25 12z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                  </svg>
+                 <!-- eye-slash icon -->
+                 <svg xmlns="http://www.w3.org/2000/svg" class="icon-eye-slash w-5 h-5 text-gray-500 block absolute inset-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="{{ if (!resident.hide_display_name) { }}display:none{{ } }}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                  </svg>
+                </span>
+              </button>
+              <input type="checkbox" class="hidden" data-resident-field="hide_display_name" {{ if (resident.hide_display_name) { }}checked{{ } }} />
+            {{ } }}
+          </div>
         </div>
         <div class="form-group mb-4">
           <label for="resident-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-          <input type="text" id="resident-phone" data-resident-field="phone" value="{{= resident.phone }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
+          <div class="flex items-center gap-2">
+            <input type="text" id="resident-phone" data-resident-field="phone" value="{{= resident.phone }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" {{ if (resident.hide_phone || resident.hidden) { }}disabled{{ } }} />
+            {{ if (canHide) { }}
+              <button type="button" class="toggle-hide-btn p-1 rounded hover:bg-gray-100 focus:outline-none" data-target-field="hide_phone" aria-label="Toggle phone visibility">
+                <span class="inline-block w-5 h-5 relative">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="icon-eye w-5 h-5 text-gray-500 block absolute inset-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="{{ if (resident.hide_phone) { }}display:none{{ } }}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s4.5-7.5 9.75-7.5 9.75 7.5 9.75 7.5-4.5 7.5-9.75 7.5S2.25 12 2.25 12z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon-eye-slash w-5 h-5 text-gray-500 block absolute inset-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="{{ if (!resident.hide_phone) { }}display:none{{ } }}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                  </svg>
+                </span>
+              </button>
+              <input type="checkbox" class="hidden" data-resident-field="hide_phone" {{ if (resident.hide_phone) { }}checked{{ } }} />
+            {{ } }}
+          </div>
         </div>
         <div class="form-group mb-4">
           <label for="resident-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input type="email" id="resident-email" data-resident-field="email" value="{{= resident.email }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
+          <div class="flex items-center gap-2">
+            <input type="email" id="resident-email" data-resident-field="email" value="{{= resident.email }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" {{ if (resident.hide_email || resident.hidden) { }}disabled{{ } }} />
+            {{ if (canHide) { }}
+              <button type="button" class="toggle-hide-btn p-1 rounded hover:bg-gray-100 focus:outline-none" data-target-field="hide_email" aria-label="Toggle email visibility">
+                <span class="inline-block w-5 h-5 relative">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="icon-eye w-5 h-5 text-gray-500 block absolute inset-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="{{ if (resident.hide_email) { }}display:none{{ } }}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s4.5-7.5 9.75-7.5 9.75 7.5 9.75 7.5-4.5 7.5-9.75 7.5S2.25 12 2.25 12z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon-eye-slash w-5 h-5 text-gray-500 block absolute inset-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="{{ if (!resident.hide_email) { }}display:none{{ } }}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                  </svg>
+                </span>
+              </button>
+              <input type="checkbox" class="hidden" data-resident-field="hide_email" {{ if (resident.hide_email) { }}checked{{ } }} />
+            {{ } }}
+          </div>
         </div>
         <div class="form-group mb-4">
           <label for="resident-homepage" class="block text-sm font-medium text-gray-700 mb-1">Homepage</label>
           <input type="url" id="resident-homepage" data-resident-field="homepage" value="{{= resident.homepage }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
         </div>
         <div class="form-group mb-4">
-          <label for="resident-birthdate" class="block text-sm font-medium text-gray-700 mb-1">Birthdate</label>
-          <input type="date" id="resident-birthdate" data-resident-field="birthdate" value="{{= resident.birthdate }}" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
+          <label for="resident-birthdate" class="block text-sm font-medium text-gray-700 mb-1">Birthday <span class="text-xs text-gray-500">(click calendar or type MM-DD)</span></label>
+          <div class="flex items-center gap-2">
+            <input type="text" id="resident-birthdate" data-resident-field="birthdate" value="{{= resident.birthdate }}" placeholder="03-15" pattern="(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" {{ if (resident.hide_birthdate || resident.hidden) { }}disabled{{ } }} />
+            {{ if (canHide) { }}
+              <button type="button" class="toggle-hide-btn p-1 rounded hover:bg-gray-100 focus:outline-none" data-target-field="hide_birthdate" aria-label="Toggle birthdate visibility">
+                <span class="inline-block w-5 h-5 relative">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="icon-eye w-5 h-5 text-gray-500 block absolute inset-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="{{ if (resident.hide_birthdate) { }}display:none{{ } }}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s4.5-7.5 9.75-7.5 9.75 7.5 9.75 7.5-4.5 7.5-9.75 7.5S2.25 12 2.25 12z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon-eye-slash w-5 h-5 text-gray-500 block absolute inset-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="{{ if (!resident.hide_birthdate) { }}display:none{{ } }}">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                  </svg>
+                </span>
+              </button>
+              <input type="checkbox" class="hidden" data-resident-field="hide_birthdate" {{ if (resident.hide_birthdate) { }}checked{{ } }} />
+            {{ } }}
+          </div>
         </div>
         <div class="form-group mb-4">
           <label for="resident-skills" class="block text-sm font-medium text-gray-700 mb-1">Skills</label>
@@ -150,6 +265,14 @@
           <label for="resident-comments" class="block text-sm font-medium text-gray-700 mb-1">Comments</label>
           <textarea id="resident-comments" data-resident-field="comments" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3">{{= resident.comments }}</textarea>
         </div>
+        {{ if (canHide) { }}
+          <div class="form-group mb-6">
+            <label class="inline-flex items-center gap-2 text-sm font-medium">
+              <input type="checkbox" id="resident-hide-all" data-resident-field="hidden" {{ if (resident.hidden) { }}checked{{ } }} class="rounded" />
+              Hide all information
+            </label>
+          </div>
+        {{ } }}
         <div class="resident-actions mt-6">
           <button class="save-resident-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow transition-colors duration-150 w-full" data-resident-id="{{= resident.id }}">
             Save Changes
@@ -179,8 +302,8 @@
           <input type="url" id="resident-homepage" data-resident-field="homepage" value="" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
         </div>
         <div class="form-group mb-4">
-          <label for="resident-birthdate" class="block text-sm font-medium text-gray-700 mb-1">Birthdate</label>
-          <input type="date" id="resident-birthdate" data-resident-field="birthdate" value="" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
+          <label for="resident-birthdate" class="block text-sm font-medium text-gray-700 mb-1">Birthday <span class="text-xs text-gray-500">(click calendar or type MM-DD)</span></label>
+          <input type="text" id="resident-birthdate" data-resident-field="birthdate" value="" placeholder="03-15" pattern="(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])" class="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3" />
         </div>
         <div class="form-group mb-4">
           <label for="resident-skills" class="block text-sm font-medium text-gray-700 mb-1">Skills</label>
@@ -197,5 +320,7 @@
         </div>
       </div>
     </script>
+
+
   </body>
 </html>

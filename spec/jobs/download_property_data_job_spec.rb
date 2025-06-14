@@ -64,13 +64,13 @@ RSpec.describe DownloadPropertyDataJob do
       # First owner
       expect(residents.first.attributes).to include(
         'official_name' => 'SMITH, JOHN',
-        'last_seen_at' => nil
+        'moved_out_at' => nil
       )
 
       # Second owner
       expect(residents.second.attributes).to include(
         'official_name' => 'SMITH, JANE',
-        'last_seen_at' => nil
+        'moved_out_at' => nil
       )
     end
 
@@ -108,7 +108,7 @@ RSpec.describe DownloadPropertyDataJob do
 
         [ old_resident1, old_resident2 ].each do |resident|
           resident.reload
-          expect(resident.last_seen_at).to eq(Time.current)
+          expect(resident.moved_out_at).to eq(Time.current)
         end
 
         new_residents = existing_house.residents.current.order(:created_at)

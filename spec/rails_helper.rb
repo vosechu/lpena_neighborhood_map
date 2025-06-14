@@ -38,15 +38,76 @@ end
 Capybara.register_driver :chrome_with_console do |app|
   options = Selenium::WebDriver::Options.chrome
   options.add_option('goog:loggingPrefs', { browser: 'ALL' })
+
   # Run in headless mode so no browser window pops during tests (Chrome 109+ flag)
   options.add_argument('--headless=new')
   options.add_argument('--disable-gpu')
   options.add_argument('--no-sandbox')
 
+  # Additional performance optimizations for CI
+  if ENV['CI']
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-extensions')
+    options.add_argument('--disable-background-timer-throttling')
+    options.add_argument('--disable-backgrounding-occluded-windows')
+    options.add_argument('--disable-renderer-backgrounding')
+    options.add_argument('--disable-features=TranslateUI')
+    options.add_argument('--disable-ipc-flooding-protection')
+    options.add_argument('--memory-pressure-off')
+    options.add_argument('--max_old_space_size=4096')
+    # Additional aggressive optimizations for CI
+    options.add_argument('--disable-web-security')
+    options.add_argument('--disable-features=VizDisplayCompositor')
+    options.add_argument('--disable-threaded-animation')
+    options.add_argument('--disable-threaded-scrolling')
+    options.add_argument('--disable-in-process-stack-traces')
+    options.add_argument('--disable-histogram-customizer')
+    options.add_argument('--disable-gl-extensions')
+    options.add_argument('--disable-composited-antialiasing')
+    options.add_argument('--disable-canvas-aa')
+    options.add_argument('--disable-3d-apis')
+    options.add_argument('--disable-accelerated-2d-canvas')
+    options.add_argument('--disable-accelerated-jpeg-decoding')
+    options.add_argument('--disable-accelerated-mjpeg-decode')
+    options.add_argument('--disable-app-list-dismiss-on-blur')
+    options.add_argument('--disable-accelerated-video-decode')
+  end
+
   Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
 end
 
 Capybara.javascript_driver = :chrome_with_console
+
+# Capybara performance optimizations
+Capybara.configure do |config|
+  config.default_max_wait_time = 5  # Reduce from default 2 seconds to 5 for stability, but not too high
+  config.automatic_reload = false   # Don't automatically reload the page
+  config.match = :prefer_exact      # Prefer exact matches over partial
+  config.exact = true              # Use exact matching by default
+  config.ignore_hidden_elements = false  # Don't filter by visibility (faster)
+end
+
+# Additional performance settings for CI
+if ENV['CI']
+  Capybara.configure do |config|
+    config.default_max_wait_time = 10  # Longer waits in CI due to slower performance
+  end
+end
+
+# Helper function for taking screenshots on timeout failures
+def screenshot_on_failure(screenshot_name, description, &block)
+  block.call
+rescue Timeout::Error, Selenium::WebDriver::Error::ElementClickInterceptedError, RSpec::Expectations::ExpectationNotMetError => e
+  # Create screenshots directory if it doesn't exist (using absolute path)
+  screenshot_dir = Rails.root.join('tmp', 'screenshots')
+  FileUtils.mkdir_p(screenshot_dir)
+
+  # Take screenshot on timeout/expectation failure (using absolute path)
+  screenshot_path = screenshot_dir.join("#{screenshot_name}.png")
+  page.save_screenshot(screenshot_path.to_s)
+
+  raise e, "#{description}: #{e.message} - screenshot saved to #{screenshot_path}"
+end
 
 RSpec.configure do |config|
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures

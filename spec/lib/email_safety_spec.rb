@@ -80,12 +80,26 @@ RSpec.describe 'Email Safety System' do
     context 'in production environment' do
       before { allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new('production')) }
 
-      it 'blocks email delivery for safety' do
-        expect(message).to receive(:perform_deliveries=).with(false)
+      context 'when ALLOW_PROD_EMAILS is not set' do
+        it 'blocks email delivery for safety' do
+          expect(message).to receive(:perform_deliveries=).with(false)
 
-        interceptor.delivering_email(message)
+          interceptor.delivering_email(message)
 
-        expect(Rails.logger).to have_received(:warn).with('Email Safety: PRODUCTION environment - email delivery BLOCKED for safety')
+          expect(Rails.logger).to have_received(:warn).with('Email Safety: PRODUCTION environment - email delivery BLOCKED (set ALLOW_PROD_EMAILS=true to enable)')
+        end
+      end
+
+      context 'when ALLOW_PROD_EMAILS is true' do
+        before { allow(ENV).to receive(:[]).with('ALLOW_PROD_EMAILS').and_return('true') }
+
+        it 'allows email delivery' do
+          expect(message).not_to receive(:perform_deliveries=)
+
+          interceptor.delivering_email(message)
+
+          expect(Rails.logger).to have_received(:info).with('Email Safety: PRODUCTION environment - email delivery ALLOWED (ALLOW_PROD_EMAILS=true)')
+        end
       end
     end
 

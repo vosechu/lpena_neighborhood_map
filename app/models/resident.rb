@@ -19,7 +19,7 @@ class Resident < ApplicationRecord
   # Optional personal info
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :phone, format: { with: /\A\+?[\d\s\-\(\)]+\z/ }, allow_blank: true
-  validates :birthdate, comparison: { less_than: -> { Date.current } }, allow_nil: true
+  validates :birthdate, format: { with: /\A(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\z/, message: 'must be in MM-DD format' }, allow_blank: true
 
   # Privacy settings - now using hide_* fields (DB default is false)
   # attribute :hide_email, :boolean
@@ -28,7 +28,7 @@ class Resident < ApplicationRecord
   # attribute :hide_display_name, :boolean
 
   # Scopes
-  scope :current, -> { where(last_seen_at: nil).where('hidden IS NOT TRUE') }
+  scope :current, -> { where(moved_out_at: nil).where('hidden IS NOT TRUE') }
   # Only residents that are not hidden
   scope :visible, -> { where('hidden IS NOT TRUE') }
 
@@ -42,5 +42,32 @@ class Resident < ApplicationRecord
 
   def to_s
     display_name.presence || official_name
+  end
+
+  # Birthday detection logic
+  def birthday_upcoming?(days_ahead = 30)
+    return false if birthdate.blank? || hide_birthdate?
+
+    month, day = birthdate.split('-').map(&:to_i)
+    return false unless month.between?(1, 12) && day.between?(1, 31)
+
+    today = Date.current
+    birthday = Date.new(today.year, month, day)
+    birthday = Date.new(today.year + 1, month, day) if birthday < today
+
+    (birthday - today).to_i.between?(0, days_ahead)
+  rescue Date::Error
+    false
+  end
+
+  def formatted_birthdate
+    return birthdate if birthdate.blank? || birthdate == '(hidden by user)'
+
+    month, day = birthdate.split('-').map(&:to_i)
+    return birthdate unless month.between?(1, 12) && day.between?(1, 31)
+
+    Date.new(2000, month, day).strftime('%B %-d')
+  rescue Date::Error
+    birthdate
   end
 end

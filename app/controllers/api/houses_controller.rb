@@ -3,7 +3,7 @@ class Api::HousesController < ApplicationController
 
   def index
     @houses = House.all.includes(:residents)
-    render json: @houses.map { |house| HouseSerializer.new(house).as_json }
+    render json: @houses.map { |house| HouseSerializer.new(house, current_user: current_user).as_json }
   end
 
   private

@@ -1,5 +1,11 @@
 notification :terminal_notifier if `uname`.strip == 'Darwin'
 
+# Warn if not running with bundle exec
+unless defined?(Bundler)
+  puts "\n⚠️  WARNING: Guard should be run with 'bundle exec guard' for proper gem loading!"
+  puts "   Notifications and other features may not work correctly.\n\n"
+end
+
 group :red_green_refactor, halt_on_fail: true do
   guard :rspec, cmd: 'bundle exec rspec', notification: true do
     watch(%r{^spec/.+_spec\.rb$})

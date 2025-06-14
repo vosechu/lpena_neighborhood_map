@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Api::ResidentsController', type: :request do
+RSpec.describe Api::ResidentsController, type: :request do
   let(:user) { create(:user) }
 
   before do
@@ -34,7 +34,7 @@ RSpec.describe 'Api::ResidentsController', type: :request do
 
   describe 'PATCH /api/residents/:id' do
     let!(:real_house) { create(:house) }
-    let!(:real_resident) { create(:resident, :without_email, house: real_house) }
+    let!(:real_resident) { create(:resident, :without_email, house: real_house, user: user) }
     let(:valid_params) { { resident: { display_name: 'Updated Name' } } }
 
     it 'updates the resident successfully' do
@@ -43,6 +43,15 @@ RSpec.describe 'Api::ResidentsController', type: :request do
 
       real_resident.reload
       expect(real_resident.display_name).to eq('Updated Name')
+    end
+
+    it 'updates the resident with valid birthdate in MM-DD format' do
+      birthdate_params = { resident: { birthdate: '03-15' } }
+      patch "/api/residents/#{real_resident.id}", params: birthdate_params
+      expect(response).to have_http_status(:ok)
+
+      real_resident.reload
+      expect(real_resident.birthdate).to eq('03-15')
     end
 
     context 'when adding an email' do
@@ -64,7 +73,7 @@ RSpec.describe 'Api::ResidentsController', type: :request do
     end
 
     context 'when updating resident with existing email' do
-      let!(:real_resident_with_email) { create(:resident, email: 'existing@example.com', display_name: 'Original Name') }
+      let!(:real_resident_with_email) { create(:resident, email: 'existing@example.com', display_name: 'Original Name', user: user) }
       let(:update_params) { { resident: { display_name: 'New Name' } } }
 
       it 'sends change notification email' do
@@ -90,6 +99,27 @@ RSpec.describe 'Api::ResidentsController', type: :request do
         patch "/api/residents/#{real_resident.id}", params: invalid_params
         expect(response).to have_http_status(:unprocessable_entity)
       end
+    end
+
+    it 'owner can set hide_email to true' do
+      resident_owner = create(:resident, house: real_house, user: user, hide_email: false)
+
+      patch "/api/residents/#{resident_owner.id}", params: { resident: { hide_email: true } }
+      expect(response).to have_http_status(:ok)
+      expect(resident_owner.reload.hide_email).to be true
+    end
+
+    it 'non-owner cannot change hide flags' do
+      neighbor = create(:user)
+      resident_other = create(:resident, house: real_house, hide_email: false)
+
+      # Switch session to neighbor
+      sign_out user
+      sign_in neighbor, scope: :user
+
+      patch "/api/residents/#{resident_other.id}", params: { resident: { hide_email: true } }
+      expect(response).to have_http_status(:found).or have_http_status(:forbidden)
+      expect(resident_other.reload.hide_email).to be false
     end
   end
 
@@ -167,6 +197,37 @@ RSpec.describe 'Api::ResidentsController', type: :request do
         }.not_to change(Resident, :count)
 
         expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
+
+  describe 'hidden data visibility through houses endpoint' do
+    let(:owner) { create(:user) }
+    let(:neighbor) { create(:user) }
+    let(:house)  { create(:house) }
+    let!(:hidden_resident) do
+      create(:resident, house: house, user: owner, phone: '555-1234', hide_phone: true, email: 'hidden@example.com', hide_email: true)
+    end
+
+    context 'as the owner' do
+      before { sign_in owner }
+
+      it 'includes real data for hidden fields' do
+        get '/api/houses'
+        json = JSON.parse(response.body).first["residents"].first
+        expect(json['phone']).to eq('555-1234')
+        expect(json['email']).to eq('hidden@example.com')
+      end
+    end
+
+    context 'as a regular neighbor without privileges' do
+      before { sign_in neighbor }
+
+      it 'masks hidden fields' do
+        get '/api/houses'
+        json = JSON.parse(response.body).first["residents"].first
+        expect(json['phone']).to eq('(hidden by user)')
+        expect(json['email']).to eq('(hidden by user)')
       end
     end
   end

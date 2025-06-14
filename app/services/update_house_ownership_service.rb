@@ -29,7 +29,7 @@ class UpdateHouseOwnershipService
   end
 
   def mark_current_residents_as_moved_out
-    @house.residents.current.update_all(last_seen_at: @current_time)
+    @house.residents.current.update_all(moved_out_at: @current_time)
   end
 
   def create_new_residents

@@ -1,0 +1,28 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Authentication and authorization
+
+## Authentication
+
+- There are no guest users of this app.
+  + Aside from the login page and the opt-out page, all endpoints require authentication
+- This is an invite-only app. There is no way for someone to create an account without being added by a neighbor.
+- The target users of this app are not technically savvy, so we prefer the simplest and most common mechanisms, even if they aren't the hottest new technology.
+
+## Authorization
+
+- Check abilities, not roles. Never check for "isAdmin?"
+- There is no "admin", but there are many people that need advanced roles, like the board of the neighborhood association or the welcoming committee
+- APIs must be checked for permissions
+- For the JS frontend, permissions are held on `data-controller="map"` in [map.html.erb](mdc:app/views/pages/map.html.erb)
+
+## General permissions
+
+- In general, users can manage almost anything about houses and residents. This is like a wiki.
+- Details about the User object are restricted to the user and folks with elevated capabilities.
+- Details about field visibility are restricted to the user and folks with elevated capabilities.
+- Opting out of emails or hiding all fields are available via a special devise token, but don't require any permissions checks at all.
+- The Avo admin panel is restricted to folks with elevated capabilities, but still requires permissions just like elsewhere on the site.

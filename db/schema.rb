@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_08_182223) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_14_142022) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -33,17 +33,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_08_182223) do
 
   create_table "residents", force: :cascade do |t|
     t.bigint "house_id", null: false
-    t.string "official_name", null: false
+    t.string "official_name"
     t.string "secondary_official_name"
     t.datetime "first_seen_at", null: false
-    t.datetime "last_seen_at"
+    t.datetime "moved_out_at"
     t.datetime "last_import_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "display_name"
     t.string "phone"
     t.string "email"
-    t.date "birthdate"
+    t.string "birthdate"
     t.date "welcomed_on"
     t.boolean "public_visibility", default: false, null: false
     t.bigint "user_id"
@@ -57,7 +57,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_08_182223) do
     t.boolean "hide_birthdate", default: false
     t.boolean "email_notifications_opted_out", default: false, null: false
     t.index ["email"], name: "index_residents_on_email"
-    t.index ["house_id", "last_seen_at"], name: "index_residents_on_house_id_and_last_seen_at"
+    t.index ["house_id", "moved_out_at"], name: "index_residents_on_house_id_and_moved_out_at"
     t.index ["house_id"], name: "index_residents_on_house_id"
     t.index ["official_name"], name: "index_residents_on_official_name"
     t.index ["user_id"], name: "index_residents_on_user_id"
