@@ -95,7 +95,7 @@ RSpec.describe 'Avo Integration', type: :request do
       let(:filtered_query) { instance_double('ActiveRecord::Relation') }
 
       it 'filters for current residents' do
-        allow(base_query).to receive(:where).with(last_seen_at: nil, hidden: [ false, nil ]).and_return(filtered_query)
+        allow(base_query).to receive(:where).with(moved_out_at: nil, hidden: [ false, nil ]).and_return(filtered_query)
 
         result = filter.apply(nil, base_query, 'current')
         expect(result).to eq(filtered_query)
@@ -103,7 +103,7 @@ RSpec.describe 'Avo Integration', type: :request do
 
       it 'filters for past residents' do
         # Use receive_message_chain for the where.not chain
-        allow(base_query).to receive_message_chain(:where, :not).with(no_args).with(last_seen_at: nil).and_return(filtered_query)
+        allow(base_query).to receive_message_chain(:where, :not).with(no_args).with(moved_out_at: nil).and_return(filtered_query)
 
         result = filter.apply(nil, base_query, 'past')
         expect(result).to eq(filtered_query)

@@ -48,9 +48,9 @@ class Avo::Resources::Resident < Avo::BaseResource
     field :user, as: :belongs_to
 
     # Timestamps
-    field :first_seen_at, as: :date_time, sortable: true, readonly: true
-    field :last_seen_at, as: :date_time, sortable: true, readonly: true
-    field :last_import_at, as: :date_time, readonly: true
+    field :first_seen_at, as: :date_time, sortable: true
+    field :moved_out_at, as: :date_time, sortable: true
+    field :last_import_at, as: :date_time, sortable: true
   end
 
   def filters

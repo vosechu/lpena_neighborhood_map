@@ -38,7 +38,7 @@ FactoryBot.define do
     end
 
     trait :moved_out do
-      last_seen_at { Time.current }
+      moved_out_at { Time.current }
     end
 
     trait :welcomed do

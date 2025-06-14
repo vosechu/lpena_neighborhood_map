@@ -28,7 +28,7 @@ class Resident < ApplicationRecord
   # attribute :hide_display_name, :boolean
 
   # Scopes
-  scope :current, -> { where(last_seen_at: nil).where('hidden IS NOT TRUE') }
+  scope :current, -> { where(moved_out_at: nil).where('hidden IS NOT TRUE') }
   # Only residents that are not hidden
   scope :visible, -> { where('hidden IS NOT TRUE') }
 

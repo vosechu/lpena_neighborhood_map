@@ -10,9 +10,9 @@ class Avo::Filters::ResidentStatusFilter < Avo::Filters::SelectFilter
     when 'hidden'
       query.where(hidden: true)
     when 'current'
-      query.where(last_seen_at: nil, hidden: [ false, nil ])
+      query.where(moved_out_at: nil, hidden: [ false, nil ])
     when 'past'
-      query.where.not(last_seen_at: nil)
+      query.where.not(moved_out_at: nil)
     else
       query
     end
