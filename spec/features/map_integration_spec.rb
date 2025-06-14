@@ -22,30 +22,39 @@ RSpec.feature 'Map core flows', type: :feature, js: true do
     login_as user, scope: :user
     visit root_path
 
-    # Ensure map polygons load
+    # Wait for map to be initialized and houses to load
+    expect(page).to have_selector('.leaflet-container', wait: 2)
+
+    # Wait for houses to load asynchronously
+    Timeout.timeout(3) do
+      loop do
+        break if page.evaluate_script('window.map && window.map._layers && Object.values(window.map._layers).filter(l => l instanceof L.Polygon).length > 0')
+        sleep 0.1
+      end
+    end
+
     page.execute_script('window.map.setView([27.772074174, -82.728144652], 17);')
-    expect(page).to have_selector('.leaflet-interactive', wait: 2)
 
     # --- Edit Existing Resident ---
     find('.leaflet-interactive', match: :first).click
-    expect(page).to have_content('Old Name', wait: 5)
+    expect(page).to have_content('Old Name', wait: 2)
 
     # Open edit modal
     within('.leaflet-popup-content') do
       find('.edit-resident-btn').click
     end
-    expect(page).to have_selector('#modal', wait: 2)
+    expect(page).to have_selector('[data-map-target="modal"]', wait: 2)
 
     # Change name + homepage (tests URL normalization) and toggle "Hide all information"
     fill_in 'resident-name', with: 'New Name'
     fill_in 'resident-homepage', with: 'example.com'
-    within('#modal') do
+    within('[data-map-target="modal"]') do
       check 'Hide all information', allow_label_click: true
     end
     click_button 'Save Changes'
 
     # Wait for modal to close and popup to refresh
-    expect(page).not_to have_selector('#modal[style*="block"]', wait: 2)
+    expect(page).not_to have_selector('[data-map-target="modal"][style*="block"]', wait: 2)
     expect(page).to have_content('New Name')
     resident.reload
     expect(resident.display_name).to eq('New Name')
@@ -56,14 +65,14 @@ RSpec.feature 'Map core flows', type: :feature, js: true do
     within('.leaflet-popup-content') do
       find('.add-resident-btn').click
     end
-    expect(page).to have_selector('#modal', wait: 2)
+    expect(page).to have_selector('[data-map-target="modal"]', wait: 2)
 
     fill_in 'resident-name', with: 'Newest Resident'
     fill_in 'resident-email', with: 'newresident@example.com'
     click_button 'Add Resident'
 
     # Wait for modal close and popup refresh
-    expect(page).not_to have_selector('#modal[style*="block"]', wait: 2)
+    expect(page).not_to have_selector('[data-map-target="modal"][style*="block"]', wait: 2)
     expect(page).to have_content('Newest Resident')
 
     # Verify database update
