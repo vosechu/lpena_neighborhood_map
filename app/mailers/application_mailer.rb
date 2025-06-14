@@ -1,9 +1,9 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: 'from@example.com'
+  default from: 'no-reply@lakepasadenaestates.com'
   layout 'mailer'
 
   # Email safety check for non-production environments
-  after_action :ensure_safe_email_delivery
+  before_action :ensure_safe_email_delivery
 
   private
 
