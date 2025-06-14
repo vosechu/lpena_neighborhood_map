@@ -3,11 +3,18 @@ require 'rails_helper'
 RSpec.feature 'Map core flows', type: :feature, js: true do
   include Warden::Test::Helpers
 
-  scenario 'User edits existing resident then adds a new resident and sees updates immediately' do
+  scenario 'Resident owner edits their info, toggles visibility, and adds a new resident—all in one flow' do
     # Setup data
     user   = FactoryBot.create(:user)
     house  = FactoryBot.create(:house)
-    resident = FactoryBot.create(:resident, house: house, display_name: 'Old Name')
+    resident = FactoryBot.create(
+      :resident,
+      house: house,
+      user: user,
+      display_name: 'Old Name',
+      phone: '727-555-9999',
+      hide_phone: false
+    )
 
     # Sign in and visit map
     login_as user, scope: :user
@@ -15,7 +22,7 @@ RSpec.feature 'Map core flows', type: :feature, js: true do
 
     # Ensure map polygons load
     page.execute_script('window.map.setView([27.772074174, -82.728144652], 17);')
-    expect(page).to have_selector('.leaflet-interactive', wait: 10)
+    expect(page).to have_selector('.leaflet-interactive', wait: 2)
 
     # --- Edit Existing Resident ---
     find('.leaflet-interactive', match: :first).click
@@ -25,32 +32,36 @@ RSpec.feature 'Map core flows', type: :feature, js: true do
     within('.leaflet-popup-content') do
       find('.edit-resident-btn').click
     end
-    expect(page).to have_selector('#modal', wait: 10)
+    expect(page).to have_selector('#modal', wait: 2)
 
-    # Change name + homepage (tests URL normalization)
+    # Change name + homepage (tests URL normalization) and toggle "Hide all information"
     fill_in 'resident-name', with: 'New Name'
     fill_in 'resident-homepage', with: 'example.com'
+    within('#modal') do
+      check 'Hide all information', allow_label_click: true
+    end
     click_button 'Save Changes'
 
     # Wait for modal to close and popup to refresh
-    expect(page).not_to have_selector('#modal[style*="block"]', wait: 10)
+    expect(page).not_to have_selector('#modal[style*="block"]', wait: 2)
     expect(page).to have_content('New Name')
     resident.reload
     expect(resident.display_name).to eq('New Name')
     expect(resident.homepage).to eq('https://example.com')
+    expect(resident.hidden).to be true
 
     # --- Add New Resident ---
     within('.leaflet-popup-content') do
       find('.add-resident-btn').click
     end
-    expect(page).to have_selector('#modal', wait: 10)
+    expect(page).to have_selector('#modal', wait: 2)
 
     fill_in 'resident-name', with: 'Newest Resident'
     fill_in 'resident-email', with: 'newresident@example.com'
     click_button 'Add Resident'
 
     # Wait for modal close and popup refresh
-    expect(page).not_to have_selector('#modal[style*="block"]', wait: 10)
+    expect(page).not_to have_selector('#modal[style*="block"]', wait: 2)
     expect(page).to have_content('Newest Resident')
 
     # Verify database update

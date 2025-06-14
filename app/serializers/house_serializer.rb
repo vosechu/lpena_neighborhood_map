@@ -1,6 +1,7 @@
 class HouseSerializer
-  def initialize(house)
+  def initialize(house, current_user: nil)
     @house = house
+    @current_user = current_user
   end
 
   def as_json(*_args)
@@ -17,7 +18,7 @@ class HouseSerializer
       created_at: @house.created_at,
       updated_at: @house.updated_at,
       residents: @house.residents.map do |resident|
-        ResidentSerializer.new(resident).as_json
+        ResidentSerializer.new(resident, current_user: @current_user).as_json
       end
     }
   end

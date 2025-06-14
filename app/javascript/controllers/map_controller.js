@@ -57,8 +57,11 @@ export default class extends Controller {
     };
     document.addEventListener('keydown', this._handleEscape);
 
-    // Admin flag from dataset
-    this.isAdmin = this.element.dataset.mapAdminValue === 'true';
+    // Current user ID (always present – this app requires authentication)
+    this.currentUserId = this.element.dataset.mapCurrentUserId;
+    if (this.currentUserId) {
+      this.currentUserId = parseInt(this.currentUserId, 10);
+    }
   }
 
   disconnect() {
@@ -77,9 +80,7 @@ export default class extends Controller {
       }).addTo(this.map);
 
       polygon.on('click', () => {
-        // TODO: Render the house details with resident details and edit buttons
         this.addHousePopup(house);
-        // TODO: Attach modal actions to the edit buttons
       });
 
       // Attach polygon to house for later styling / searching
@@ -118,7 +119,9 @@ export default class extends Controller {
 
         const modalEl = document.getElementById('modal');
         const templateHtml = document.getElementById('resident-edit-form-template').innerHTML;
-        modalEl.innerHTML = _.template(templateHtml)({ resident });
+        // Permission to hide data: only record ownership
+        const canHide = (resident.user_id && parseInt(resident.user_id, 10) === this.currentUserId);
+        modalEl.innerHTML = _.template(templateHtml)({ resident, canHide });
         modalEl.style.display = 'block';
         this.attachResidentFormHandlers(resident, house);
       });
@@ -134,11 +137,58 @@ export default class extends Controller {
   renderHouseAndResidentsDetails(house) {
     const templateHtml = document.getElementById('house-edit-form-template').innerHTML;
     const compiled = _.template(templateHtml);
-    return compiled({ house, isAdmin: this.isAdmin });
+    return compiled({ house });
   }
 
   attachResidentFormHandlers(resident, house) {
     const modalEl = document.getElementById('modal');
+
+    // ================= Hide field toggles =================
+    modalEl.querySelectorAll('.toggle-hide-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const fieldKey = e.currentTarget.dataset.targetField; // e.g. hide_email
+        const checkbox = modalEl.querySelector(`input[data-resident-field="${fieldKey}"]`);
+        const inputFieldKey = fieldKey.replace('hide_', '');
+        const input = modalEl.querySelector(`[data-resident-field="${inputFieldKey}"]`);
+        if (!checkbox) return;
+        checkbox.checked = !checkbox.checked;
+        if (input) {
+          input.disabled = checkbox.checked;
+          input.classList.toggle('opacity-50', checkbox.checked);
+          input.classList.toggle('cursor-not-allowed', checkbox.checked);
+        }
+
+        // Swap icons
+        const eye = e.currentTarget.querySelector('.icon-eye');
+        const eyeSlash = e.currentTarget.querySelector('.icon-eye-slash');
+        if (eye && eyeSlash) {
+          if (checkbox.checked) {
+            eye.style.display = 'none';
+            eyeSlash.style.display = 'inline';
+          } else {
+            eye.style.display = 'inline';
+            eyeSlash.style.display = 'none';
+          }
+        }
+      });
+    });
+
+    // Hide all information checkbox handler
+    const hideAllCheckbox = modalEl.querySelector('#resident-hide-all');
+    if (hideAllCheckbox) {
+      hideAllCheckbox.addEventListener('change', (e) => {
+        const hide = e.target.checked;
+        modalEl.querySelectorAll('[data-resident-field]').forEach(el => {
+          const fieldName = el.dataset.residentField;
+          if (fieldName.startsWith('hide_') || fieldName === 'hidden') return; // skip hide checkboxes themselves & hidden flag
+          if (el.type !== 'checkbox') {
+            el.disabled = hide;
+            el.classList.toggle('opacity-50', hide);
+            el.classList.toggle('cursor-not-allowed', hide);
+          }
+        });
+      });
+    }
 
     // Save button
     const saveBtn = modalEl.querySelector('.save-resident-btn');
@@ -205,7 +255,11 @@ export default class extends Controller {
 
     formFields.forEach(field => {
       const fieldName = field.dataset.residentField;
-      formData[fieldName] = field.value;
+      if (field.type === 'checkbox') {
+        formData[fieldName] = field.checked;
+      } else {
+        formData[fieldName] = field.value;
+      }
     });
 
     // Validate required fields
@@ -294,7 +348,11 @@ export default class extends Controller {
 
     formFields.forEach(field => {
       const fieldName = field.dataset.residentField;
-      formData[fieldName] = field.value;
+      if (field.type === 'checkbox') {
+        formData[fieldName] = field.checked;
+      } else {
+        formData[fieldName] = field.value;
+      }
     });
 
     // Disable save button and show loading state

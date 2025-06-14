@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Opt Outs', type: :request do
+RSpec.describe OptOutsController, type: :request do
   let(:resident) { create(:resident, display_name: 'Test Resident', email: 'test@example.com') }
   let(:token) { generate_opt_out_token(resident) }
   let(:expired_token) { generate_expired_opt_out_token(resident) }
