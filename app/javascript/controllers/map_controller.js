@@ -24,9 +24,6 @@ export default class extends Controller {
   connect() {
     console.log("Map controller connected")
 
-    // Make formatBirthdate available globally for templates
-    window.formatBirthdate = this.formatBirthdate.bind(this)
-
     // Initialize Leaflet map on the dedicated canvas target (not the controller root)
     this.map = L.map(this.canvasTarget).setView([27.77441168140785, -82.72030234336854], 17)
     window.map = this.map
@@ -92,6 +89,9 @@ export default class extends Controller {
 
       // Add to map initially; filtering will toggle later
       polygon.addTo(this.map);
+
+      // Add any status icons to the house
+      this.addHouseIcons(house);
     }
   }
 
@@ -137,7 +137,7 @@ export default class extends Controller {
     }
   }
 
-  renderHouseAndResidentsDetails(house) {
+    renderHouseAndResidentsDetails(house) {
     const templateHtml = document.getElementById('house-edit-form-template').innerHTML;
     const compiled = _.template(templateHtml);
     return compiled({ house });
@@ -208,6 +208,20 @@ export default class extends Controller {
       homepageField.addEventListener('blur', (e) => this.normalizeHomepageUrl(e.target));
     }
 
+    // Birthdate picker enhancement
+    this.enhanceBirthdateField(modalEl);
+
+    // Enter key submission
+    modalEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const saveBtn = modalEl.querySelector('.save-resident-btn');
+        if (saveBtn && !saveBtn.disabled) {
+          saveBtn.click();
+        }
+      }
+    });
+
     // Close modal on backdrop click
     modalEl.addEventListener('click', (e) => {
       if (e.target === modalEl) modalEl.style.display = 'none';
@@ -237,6 +251,20 @@ export default class extends Controller {
     if (homepageField) {
       homepageField.addEventListener('blur', (e) => this.normalizeHomepageUrl(e.target));
     }
+
+    // Birthdate picker enhancement
+    this.enhanceBirthdateField(modalEl);
+
+    // Enter key submission
+    modalEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const saveBtn = modalEl.querySelector('.add-resident-save-btn');
+        if (saveBtn && !saveBtn.disabled) {
+          saveBtn.click();
+        }
+      }
+    });
 
     modalEl.addEventListener('click', (e) => {
       if (e.target === modalEl) modalEl.style.display = 'none';
@@ -474,6 +502,81 @@ export default class extends Controller {
     }
   }
 
+    enhanceBirthdateField(modalEl) {
+    const birthdateField = modalEl.querySelector('#resident-birthdate');
+    if (!birthdateField) return;
+
+    // Create a wrapper div for the date picker
+    const wrapper = document.createElement('div');
+    wrapper.className = 'relative';
+
+    // Insert wrapper before the input field
+    birthdateField.parentNode.insertBefore(wrapper, birthdateField);
+    wrapper.appendChild(birthdateField);
+
+    // Create a hidden date input for the picker - only cover the icon area
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.className = 'absolute right-0 top-0 w-10 h-full opacity-0 cursor-pointer';
+    dateInput.style.zIndex = '2';
+
+    // Set initial value if birthdate exists
+    if (birthdateField.value) {
+      const mmdd = birthdateField.value;
+      const parts = mmdd.split('-');
+      if (parts.length === 2) {
+        const month = parts[0].padStart(2, '0');
+        const day = parts[1].padStart(2, '0');
+        // Use current year as placeholder
+        const currentYear = new Date().getFullYear();
+        dateInput.value = `${currentYear}-${month}-${day}`;
+      }
+    }
+
+    wrapper.appendChild(dateInput);
+
+    // Add calendar icon
+    const calendarIcon = document.createElement('div');
+    calendarIcon.className = 'absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400';
+    calendarIcon.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    `;
+    wrapper.appendChild(calendarIcon);
+
+    // Handle date picker changes
+    dateInput.addEventListener('change', (e) => {
+      const selectedDate = e.target.value;
+      if (selectedDate) {
+        const date = new Date(selectedDate);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        birthdateField.value = `${month}-${day}`;
+
+        // Trigger validation
+        birthdateField.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+
+    // Handle manual text input
+    birthdateField.addEventListener('input', (e) => {
+      const value = e.target.value;
+      const mmddPattern = /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
+
+      if (mmddPattern.test(value)) {
+        const parts = value.split('-');
+        const month = parts[0];
+        const day = parts[1];
+        const currentYear = new Date().getFullYear();
+        dateInput.value = `${currentYear}-${month}-${day}`;
+      }
+    });
+
+    // Style the text input to accommodate the icon
+    birthdateField.style.paddingRight = '2.5rem';
+  }
+
   // ============== Search Highlighting =================
   updateHighlight() {
     const query = (this.hasSearchInputTarget ? this.searchInputTarget.value : '').trim().toLowerCase();
@@ -524,25 +627,85 @@ export default class extends Controller {
     this.updateHighlight();
   }
 
-  // Format MM-DD birthdate to month name using modern JS Intl API
-  formatBirthdate(mmdd) {
-    if (!mmdd || mmdd === '(hidden by user)') return mmdd;
 
-    const parts = mmdd.split('-');
-    if (parts.length !== 2) return mmdd;
 
-    const month = parseInt(parts[0], 10);
-    const day = parseInt(parts[1], 10);
+  // Add status icons to a house polygon
+  addHouseIcons(house) {
+    if (!house.polygon) return;
 
-    // Validate month and day ranges
-    if (month < 1 || month > 12 || day < 1 || day > 31) return mmdd;
+    // Get the center of the polygon for icon placement
+    const bounds = house.polygon.getBounds();
+    const center = bounds.getCenter();
 
-    // Use a dummy year (2000) to create a valid date for formatting
-    const date = new Date(2000, month - 1, day);
+    // Collect all icons that should be displayed
+    const icons = this.getHouseIcons(house);
 
-    // Use Intl.DateTimeFormat to get the month name
-    const monthName = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(date);
+    if (icons.length === 0) return;
 
-    return `${monthName} ${day}`;
+    // Create a container for multiple icons
+    const iconContainer = L.divIcon({
+      className: 'house-icons-container',
+      html: this.renderIconsHtml(icons),
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+
+    // Add the icon marker to the map
+    const iconMarker = L.marker(center, { icon: iconContainer }).addTo(this.map);
+
+    // Store reference for cleanup
+    house.iconMarker = iconMarker;
+
+    // Make sure icon marker also triggers house popup
+    iconMarker.on('click', () => {
+      this.addHousePopup(house);
+    });
+  }
+
+      // Get array of icons that should be displayed for a house
+  getHouseIcons(house) {
+    if (!house.icon_type) return [];
+
+    const eventCount = house.events ? house.events.length : 0;
+
+    if (house.icon_type === 'star') {
+      return [{
+        type: 'celebration',
+        svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 text-yellow-500">
+          <path fill-rule="evenodd" d="M8 1.75a.75.75 0 0 1 .692.462l1.41 3.393 3.664.293a.75.75 0 0 1 .428 1.317l-2.791 2.39.853 3.575a.75.75 0 0 1-1.12.814L7.998 12.08l-3.135 1.915a.75.75 0 0 1-1.12-.814l.852-3.574-2.79-2.39a.75.75 0 0 1 .427-1.318l3.663-.293 1.41-3.393A.75.75 0 0 1 8 1.75Z" clip-rule="evenodd" />
+        </svg>`,
+        title: `${eventCount} exciting things happening here!`
+      }];
+    }
+
+    if (house.icon_type === 'birthday') {
+      return [{
+        type: 'birthday',
+        svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 text-pink-600">
+          <path d="m4.75 1-.884.884a1.25 1.25 0 1 0 1.768 0L4.75 1ZM11.25 1l-.884.884a1.25 1.25 0 1 0 1.768 0L11.25 1ZM8.884 1.884 8 1l-.884.884a1.25 1.25 0 1 0 1.768 0ZM4 7a2 2 0 0 0-2 2v1.034c.347 0 .694-.056 1.028-.167l.47-.157a4.75 4.75 0 0 1 3.004 0l.47.157a3.25 3.25 0 0 0 2.056 0l.47-.157a4.75 4.75 0 0 1 3.004 0l.47.157c.334.111.681.167 1.028.167V9a2 2 0 0 0-2-2V5.75a.75.75 0 0 0-1.5 0V7H8.75V5.75a.75.75 0 0 0-1.5 0V7H5.5V5.75a.75.75 0 0 0-1.5 0V7ZM14 11.534a4.749 4.749 0 0 1-1.502-.244l-.47-.157a3.25 3.25 0 0 0-2.056 0l-.47.157a4.75 4.75 0 0 1-3.004 0l-.47-.157a3.25 3.25 0 0 0-2.056 0l.47.157A4.748 4.748 0 0 1 2 11.534V13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1.466Z" />
+        </svg>`,
+        title: 'Upcoming birthday in the next 30 days!'
+      }];
+    }
+
+    if (house.icon_type === 'new_residents') {
+      return [{
+        type: 'new_residents',
+        svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 text-green-600">
+          <path fill-rule="evenodd" d="M3.75 3.5c0 .563.186 1.082.5 1.5H2a1 1 0 0 0 0 2h5.25V5h1.5v2H14a1 1 0 1 0 0-2h-2.25A2.5 2.5 0 0 0 8 1.714 2.5 2.5 0 0 0 3.75 3.5Zm3.499 0v-.038A1 1 0 1 0 6.25 4.5h1l-.001-1Zm2.5-1a1 1 0 0 0-1 .962l.001.038v1h.999a1 1 0 0 0 0-2Z" clip-rule="evenodd" />
+          <path d="M7.25 8.5H2V12a2 2 0 0 0 2 2h3.25V8.5ZM8.75 14V8.5H14V12a2 2 0 0 1-2 2H8.75Z" />
+        </svg>`,
+        title: 'New residents in the last 30 days!'
+      }];
+    }
+
+    return [];
+  }
+
+  // Render HTML for multiple icons
+  renderIconsHtml(icons) {
+    return `<div class="flex gap-1 items-center justify-center bg-white bg-opacity-90 rounded-full p-1 shadow-sm">
+      ${icons.map(icon => `<span title="${icon.title}">${icon.svg}</span>`).join('')}
+    </div>`;
   }
 }

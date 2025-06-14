@@ -45,6 +45,15 @@ RSpec.describe Api::ResidentsController, type: :request do
       expect(real_resident.display_name).to eq('Updated Name')
     end
 
+    it 'updates the resident with valid birthdate in MM-DD format' do
+      birthdate_params = { resident: { birthdate: '03-15' } }
+      patch "/api/residents/#{real_resident.id}", params: birthdate_params
+      expect(response).to have_http_status(:ok)
+
+      real_resident.reload
+      expect(real_resident.birthdate).to eq('03-15')
+    end
+
     context 'when adding an email' do
       let(:email_params) { { resident: { email: 'new@example.com' } } }
 

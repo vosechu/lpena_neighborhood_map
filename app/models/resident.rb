@@ -43,4 +43,31 @@ class Resident < ApplicationRecord
   def to_s
     display_name.presence || official_name
   end
+
+  # Birthday detection logic
+  def birthday_upcoming?(days_ahead = 30)
+    return false if birthdate.blank? || hide_birthdate?
+
+    month, day = birthdate.split('-').map(&:to_i)
+    return false unless month.between?(1, 12) && day.between?(1, 31)
+
+    today = Date.current
+    birthday = Date.new(today.year, month, day)
+    birthday = Date.new(today.year + 1, month, day) if birthday < today
+
+    (birthday - today).to_i.between?(0, days_ahead)
+  rescue Date::Error
+    false
+  end
+
+  def formatted_birthdate
+    return birthdate if birthdate.blank? || birthdate == '(hidden by user)'
+
+    month, day = birthdate.split('-').map(&:to_i)
+    return birthdate unless month.between?(1, 12) && day.between?(1, 31)
+
+    Date.new(2000, month, day).strftime('%B %-d')
+  rescue Date::Error
+    birthdate
+  end
 end

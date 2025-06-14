@@ -17,6 +17,8 @@ class HouseSerializer
       boundary_geometry: @house.boundary_geometry,
       created_at: @house.created_at,
       updated_at: @house.updated_at,
+      events: @house.events,
+      icon_type: @house.icon_type,
       residents: @house.residents.map do |resident|
         ResidentSerializer.new(resident, current_user: @current_user).as_json
       end

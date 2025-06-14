@@ -13,7 +13,9 @@ RSpec.feature 'Map core flows', type: :feature, js: true do
       user: user,
       display_name: 'Old Name',
       phone: '727-555-9999',
-      hide_phone: false
+      hide_phone: false,
+      first_seen_at: 2.months.ago,  # Avoid triggering recent changes icon
+      hidden: false  # Ensure resident is visible
     )
 
     # Sign in and visit map
