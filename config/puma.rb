@@ -33,6 +33,16 @@ port ENV.fetch('PORT', 3000)
 # Allow puma to be restarted by `bin/rails restart` command.
 plugin :tmp_restart
 
+# Test environment optimizations for faster startup
+if ENV['RAILS_ENV'] == 'test'
+  # Reduce threads for faster startup in tests
+  threads 1, 1
+  # Disable worker timeout in tests
+  worker_timeout 3600
+  # Faster startup options
+  preload_app! if ENV['CI']
+end
+
 # Run the Solid Queue supervisor inside of Puma for single-server deployments
 plugin :solid_queue if ENV['SOLID_QUEUE_IN_PUMA']
 

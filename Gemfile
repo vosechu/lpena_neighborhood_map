@@ -85,6 +85,8 @@ group :test do
   gem 'timecop'
   # HTTP request mocking
   gem 'webmock'
+  # SQLite for faster unit/request tests
+  gem 'sqlite3'
 end
 
 gem 'importmap-rails', '~> 2.1'

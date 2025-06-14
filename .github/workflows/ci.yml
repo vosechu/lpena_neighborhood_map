@@ -42,19 +42,9 @@ jobs:
 
   test_unit:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: lpena_neighborhood_map_test
-        ports: [ '5432:5432' ]
-        options: >-
-          --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5
     env:
       RAILS_ENV: test
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/lpena_neighborhood_map_test
+      CI: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -64,9 +54,6 @@ jobs:
         with:
           ruby-version: .ruby-version
           bundler-cache: true
-
-      - name: Install PostgreSQL client
-        run: sudo apt-get update -y && sudo apt-get install -y libpq-dev
 
       - name: Prepare database
         run: bin/rails db:prepare
@@ -76,19 +63,9 @@ jobs:
 
   test_request:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: lpena_neighborhood_map_test
-        ports: [ '5432:5432' ]
-        options: >-
-          --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5
     env:
       RAILS_ENV: test
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/lpena_neighborhood_map_test
+      CI: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -99,27 +76,20 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
-      - name: Install PostgreSQL client
-        run: sudo apt-get update -y && sudo apt-get install -y libpq-dev
-
       - name: Prepare database
         run: bin/rails db:prepare
+
+      - name: Build Tailwind CSS for tests
+        run: bin/rails tailwindcss:build
 
       - name: Run Request Specs
         run: bin/rspec --tag type:request --format documentation
 
   test_feature:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: lpena_neighborhood_map_test
     env:
       RAILS_ENV: test
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/lpena_neighborhood_map_test
+      CI: true
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
@@ -127,21 +97,29 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
-      - name: Install system dependencies (for headless Chrome)
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libpq-dev chromium-browser
-
       - name: Prepare database
         run: bin/rails db:prepare
 
+      - name: Build Tailwind CSS for tests
+        run: bin/rails tailwindcss:build
+
       - name: Run Feature Specs (with screenshot capture on failure)
         run: bin/rspec --tag type:feature --format documentation
+
+      - name: List screenshot directory (for debugging)
+        if: failure()
+        run: |
+          echo "Current working directory: $(pwd)"
+          echo "Contents of tmp/screenshots:"
+          ls -la ${{ github.workspace }}/tmp/screenshots/ || echo "${{ github.workspace }}/tmp/screenshots directory does not exist"
+          ls -la tmp/screenshots/ || echo "tmp/screenshots directory does not exist"
+          find . -name "*.png" -type f || echo "No PNG files found"
 
       - name: Upload Screenshot Artifact (if failure)
         uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: screenshots
-          path: ${{ github.workspace }}/tmp/screenshots
-          if-no-files-found: ignore
+          path: tmp/screenshots
+          if-no-files-found: warn
+          retention-days: 30

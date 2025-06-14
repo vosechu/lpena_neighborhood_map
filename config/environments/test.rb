@@ -15,8 +15,22 @@ Rails.application.configure do
   # loading is working properly before deploying your code.
   config.eager_load = ENV['CI'].present?
 
+  # Performance optimizations for tests
+  config.cache_classes = true if ENV['CI']
+  config.action_controller.perform_caching = false
+  config.action_view.cache_template_loading = true
+
   # Configure public file server for tests with cache-control for performance.
   config.public_file_server.headers = { 'cache-control' => 'public, max-age=3600' }
+
+  # Enable serving static files for feature tests
+  config.public_file_server.enabled = true
+
+  # Ensure assets are compiled on-demand for feature tests (faster than precompiling)
+  config.assets.compile = true
+  config.assets.debug = false
+  config.assets.digest = false  # Disable digest for easier debugging in tests
+  config.assets.check_precompiled_asset = false  # Don't check for precompiled assets
 
   # Show full error reports.
   config.consider_all_requests_local = true
