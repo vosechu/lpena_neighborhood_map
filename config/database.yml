@@ -94,7 +94,7 @@ production:
     statement_limit: 1000
     sslmode: require
   cache:
-    url: <%= ENV['DATABASE_URL'].sub(/\/([^\/]+)$/, '/\1_cache') %>
+    url: <%= ENV['DATABASE_URL'].present? ? ENV['DATABASE_URL'].sub(/\/([^\/]+)$/, '/\1_cache') : nil %>
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     encoding: unicode
     timeout: 5000
@@ -107,7 +107,7 @@ production:
     sslmode: require
     migrations_paths: db/cache_migrate
   cable:
-    url: <%= ENV['DATABASE_URL'].sub(/\/([^\/]+)$/, '/\1_cable') %>
+    url: <%= ENV['DATABASE_URL'].present? ? ENV['DATABASE_URL'].sub(/\/([^\/]+)$/, '/\1_cable') : nil %>
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     encoding: unicode
     timeout: 5000
