@@ -2,24 +2,28 @@ source 'https://rubygems.org'
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem 'rails', '~> 8.0.2'
+
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem 'propshaft'
+
 # Use postgresql as the database for Active Record
-gem 'pg', '~> 1.1'
+gem 'pg'
+
 # Use the Puma web server [https://github.com/puma/puma]
-gem 'puma', '>= 5.0'
+gem 'puma'
+
 # Use Tailwind CSS [https://github.com/rails/tailwindcss-rails]
 gem 'tailwindcss-rails'
+
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem 'jbuilder'
+
 # HTTP client for making API requests
 gem 'httparty'
+
 # Background job processing
 gem 'sidekiq'
 gem 'sidekiq-scheduler'
-
-# Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
 
 # Authentication and authorization
 gem 'devise'
@@ -37,22 +41,21 @@ gem 'solid_cache'
 gem 'solid_queue'
 gem 'solid_cable'
 
+# Importmaps and Stimulus
+gem 'importmap-rails'
+gem 'stimulus-rails'
+
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', require: false
 
-# Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
-gem 'kamal', require: false
 
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem 'thruster', require: false
 
-# Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-# gem "image_processing", "~> 1.2"
-
 # Application performance monitoring
 gem 'newrelic_rpm'
 
-# Email
+# Email sending with DKIM/DMARC so it doesn't get marked as spam
 gem 'mailgun-ruby'
 
 group :development, :test do
@@ -76,24 +79,29 @@ group :development do
   gem 'guard-rubocop'
   gem 'terminal-notifier-guard'
   gem 'ruby_gntp'  # For cross-platform notifications
+
+  # Email testing for dev mode
+  gem 'letter_opener'
 end
 
 group :test do
   # Testing framework
   gem 'rspec-rails'
   gem 'rspec-mocks'
+
   # Test data generation
   gem 'factory_bot_rails'
-  # System testing
+
+  # Feature testing
   gem 'capybara'
   gem 'selenium-webdriver'
+
   # Time manipulation for testing
   gem 'timecop'
+
   # HTTP request mocking
   gem 'webmock'
+
   # SQLite for faster unit/request tests
   gem 'sqlite3'
 end
-
-gem 'importmap-rails', '~> 2.1'
-gem 'stimulus-rails', '~> 1.3'

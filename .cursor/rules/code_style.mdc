@@ -19,3 +19,6 @@ The project follows standard Ruby style conventions as defined in [.rubocop.yml]
 3. Run the specs and fix any failures
 3. Fix all RuboCop warnings
 4. Keep commits focused and well-documented
+
+## Adding a new library
+- Always look up the current documentation before installing and configuring a new gem
