@@ -1,5 +1,5 @@
 class ResidentMailer < ApplicationMailer
-  default from: 'noreply@neighborhoodmap.local'
+  default from: 'no-reply@lakepasadenaestates.com'
   queue_as :critical
 
   # Class method to handle conditional email sending

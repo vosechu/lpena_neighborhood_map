@@ -10,7 +10,7 @@ RSpec.describe ResidentMailer, type: :mailer do
     it 'renders the headers' do
       expect(mail.subject).to eq("Welcome to the Neighborhood Directory - Set up your account")
       expect(mail.to).to eq([ user.email ])
-      expect(mail.from).to eq([ 'noreply@neighborhoodmap.local' ])
+      expect(mail.from).to eq([ 'no-reply@lakepasadenaestates.com' ])
     end
 
     it 'renders the body' do
@@ -46,7 +46,7 @@ RSpec.describe ResidentMailer, type: :mailer do
     it 'renders the headers' do
       expect(mail.subject).to eq('Your neighborhood information has been updated')
       expect(mail.to).to eq([ resident.email ])
-      expect(mail.from).to eq([ 'noreply@neighborhoodmap.local' ])
+      expect(mail.from).to eq([ 'no-reply@lakepasadenaestates.com' ])
     end
 
     it 'renders the body' do
