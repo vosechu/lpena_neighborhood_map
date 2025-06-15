@@ -1,11 +1,37 @@
 require 'rails_helper'
 
 RSpec.describe HouseSerializer do
-  let(:house) { House.new(id: 1, street_number: 123, street_name: "Main St", city: "Townsville", state: "TS", zip: "12345", latitude: 1.23, longitude: 4.56, boundary_geometry: nil, created_at: Time.now, updated_at: Time.now) }
-  let(:resident) { Resident.new(display_name: "Jane", hide_display_name: false, homepage: "https://example.com", skills: "gardening", comments: "Nice neighbor") }
+  let(:resident) do
+    FactoryBot.build_stubbed(:resident,
+      display_name: "Jane",
+      hide_display_name: false,
+      homepage: "https://example.com",
+      skills: "gardening",
+      comments: "Nice neighbor",
+      hidden: false,
+      moved_out_at: nil
+    )
+  end
 
-  before do
-    allow(house).to receive(:residents).and_return([ resident ])
+  let(:house) do
+    house = FactoryBot.build_stubbed(:house,
+      id: 1,
+      street_number: 123,
+      street_name: "Main St",
+      city: "Townsville",
+      state: "TS",
+      zip: "12345",
+      latitude: 1.23,
+      longitude: 4.56,
+      boundary_geometry: nil,
+      created_at: Time.now,
+      updated_at: Time.now
+    )
+    allow(house).to receive_message_chain(:residents, :current).and_return([resident])
+    allow(house).to receive_message_chain(:residents, :any?).and_return(false)
+    allow(house).to receive(:events).and_return([])
+    allow(house).to receive(:icon_type).and_return(nil)
+    house
   end
 
   it "includes all expected house fields" do

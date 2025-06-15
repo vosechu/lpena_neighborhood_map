@@ -57,18 +57,19 @@ RSpec.describe Api::ResidentsController, type: :request do
     context 'when adding an email' do
       let(:email_params) { { resident: { email: 'new@example.com' } } }
 
-      it 'creates a new user and sends welcome email' do
+      it 'updates the existing user email and sends welcome email' do
         real_resident.update!(email: nil)
 
         expect {
           patch "/api/residents/#{real_resident.id}", params: email_params
-        }.to change(User, :count).by(1)
+        }.not_to change(User, :count)
 
         expect(response).to have_http_status(:ok)
 
         real_resident.reload
         expect(real_resident.email).to eq('new@example.com')
-        expect(real_resident.user).to be_present
+        expect(real_resident.user).to eq(user)
+        expect(user.reload.email).to eq('new@example.com')
       end
     end
 

@@ -63,6 +63,11 @@ FactoryBot.define do
 
     trait :without_email do
       email { nil }
+      user { nil }
+    end
+
+    trait :hidden do
+      hidden { true }
     end
   end
 end

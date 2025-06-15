@@ -8,10 +8,8 @@ class ResidentUpdateService
 
     # Update the resident
     if resident.update(params)
-      # Check if email was added and create user if needed
-      if email_was_added?(original_email, resident.email)
-        create_user_for_resident(resident)
-      end
+      # Handle email changes
+      handle_email_change(resident, original_email)
 
       # Send notification email if resident has email, data changed, and not hidden
       if should_send_notification?(resident, original_attributes)
@@ -26,27 +24,57 @@ class ResidentUpdateService
     end
   end
 
+  # Class method to resend welcome email
+  def self.resend_welcome_email(resident)
+    return false unless resident.user.present? && resident.email.present?
+
+    # Generate a new login token
+    login_token = UserCreationService.generate_initial_login_token(resident.user)
+
+    # Send welcome email
+    ResidentMailer.welcome_new_user(resident, resident.user).deliver_later
+
+    Rails.logger.info "Resent welcome email to #{resident.email} for resident #{resident.id}"
+    true
+  rescue => e
+    Rails.logger.error "Failed to resend welcome email for resident #{resident.id}: #{e.message}"
+    false
+  end
+
   private
 
-  def self.email_was_added?(original_email, new_email)
-    original_email.blank? && new_email.present?
+  def self.handle_email_change(resident, original_email)
+    return if resident.email == original_email # No change
+
+    if resident.email.blank?
+      # Email was removed - keep the user association but don't do anything else
+      Rails.logger.info "Email removed for resident #{resident.id}, keeping user association"
+      return
+    end
+
+    if resident.user.present?
+      # Resident has a user - update the user's email if it's different
+      if resident.user.email != resident.email
+        resident.user.update(email: resident.email)
+        Rails.logger.info "Updated email for existing user #{resident.user.id} to #{resident.email}"
+      end
+    else
+      # Resident has no user - check if user exists with this email
+      existing_user = User.find_by(email: resident.email)
+      if existing_user
+        # Link existing user to resident
+        resident.update(user: existing_user)
+        Rails.logger.info "Linked existing user #{existing_user.id} to resident #{resident.id}"
+      else
+        # Create new user
+        create_user_for_resident(resident)
+      end
+    end
   end
 
   def self.create_user_for_resident(resident)
     return if resident.email.blank?
 
-    # Check if user already exists with this email
-    existing_user = User.find_by(email: resident.email)
-    if existing_user
-      # Link existing user to resident if not already linked
-      if resident.user.nil?
-        resident.update(user: existing_user)
-        Rails.logger.info "Linked existing user #{existing_user.id} to resident #{resident.id}"
-      end
-      return existing_user
-    end
-
-    # Create new user
     begin
       user = UserCreationService.create_user(
         email: resident.email,

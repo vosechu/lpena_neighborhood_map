@@ -2,14 +2,17 @@ require 'rails_helper'
 
 RSpec.describe ResidentSerializer do
   let(:resident) do
-    Resident.new(
+    FactoryBot.build_stubbed(:resident,
       display_name: "Jane",
       hide_display_name: false,
       email: "jane@example.com",
       hide_email: false,
       homepage: "https://example.com",
       skills: "gardening",
-      comments: "Nice neighbor"
+      comments: "Nice neighbor",
+      hidden: false,
+      user_id: nil,
+      first_seen_at: Time.zone.now
     )
   end
 
@@ -45,7 +48,7 @@ RSpec.describe ResidentSerializer do
   end
 
   describe '#as_json' do
-    let(:resident) { build_stubbed(:resident, hidden: false, first_seen_at: Time.zone.now) }
+    let(:resident) { FactoryBot.build_stubbed(:resident, hidden: false, first_seen_at: Time.zone.now) }
 
     it 'includes hidden state and first_seen_at metadata' do
       json = described_class.new(resident).as_json

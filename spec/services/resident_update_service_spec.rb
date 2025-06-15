@@ -155,18 +155,91 @@ RSpec.describe ResidentUpdateService, type: :service do
         expect(ResidentMailer).to have_received(:data_change_notification)
       end
     end
-  end
 
-  describe '.email_was_added?' do
-    it 'returns true when email was added' do
-      expect(ResidentUpdateService.send(:email_was_added?, nil, 'new@example.com')).to be true
-      expect(ResidentUpdateService.send(:email_was_added?, '', 'new@example.com')).to be true
-    end
+    describe 'email handling' do
+      context 'when adding email to resident without user' do
+        let(:resident) { create(:resident, :without_email) }
+        let(:params) { { email: 'new@example.com' } }
 
-    it 'returns false when email was not added' do
-      expect(ResidentUpdateService.send(:email_was_added?, 'old@example.com', 'new@example.com')).to be false
-      expect(ResidentUpdateService.send(:email_was_added?, 'old@example.com', '')).to be false
-      expect(ResidentUpdateService.send(:email_was_added?, '', '')).to be false
+        it 'creates a new user and sends welcome email' do
+          expect {
+            ResidentUpdateService.update_resident(resident, params)
+          }.to change(User, :count).by(1)
+
+          resident.reload
+          expect(resident.user).to be_present
+          expect(resident.user.email).to eq('new@example.com')
+          expect(resident.user.name).to eq(resident.display_name)
+        end
+
+        it 'sends welcome email' do
+          expect(ResidentMailer).to receive(:welcome_new_user)
+            .with(kind_of(Resident), kind_of(User))
+            .and_return(double(deliver_later: true))
+
+          ResidentUpdateService.update_resident(resident, params)
+        end
+      end
+
+      context 'when updating email for resident with existing user' do
+        let!(:user) { create(:user, email: 'old@example.com') }
+        let(:resident) { create(:resident, email: 'old@example.com', user: user) }
+        let(:params) { { email: 'new@example.com' } }
+
+        it 'updates the existing user email' do
+          expect {
+            ResidentUpdateService.update_resident(resident, params)
+          }.not_to change(User, :count)
+
+          resident.reload
+          expect(resident.user).to eq(user)
+          expect(resident.user.email).to eq('new@example.com')
+        end
+
+        it 'sends change notification but not welcome email' do
+          expect(ResidentMailer).to receive(:data_change_notification)
+            .with(resident, hash_including('email' => hash_including(from: 'old@example.com', to: 'new@example.com')))
+            .and_return(double(deliver_later: true))
+          expect(ResidentMailer).not_to receive(:welcome_new_user)
+
+          ResidentUpdateService.update_resident(resident, params)
+        end
+      end
+
+      context 'when removing email from resident with user' do
+        let(:user) { create(:user, email: 'test@example.com') }
+        let(:resident) { create(:resident, email: 'test@example.com', user: user) }
+        let(:params) { { email: '' } }
+
+        it 'keeps the user association' do
+          ResidentUpdateService.update_resident(resident, params)
+
+          resident.reload
+          expect(resident.email).to be_blank
+          expect(resident.user).to eq(user)
+          expect(user.email).to eq('test@example.com') # User email unchanged
+        end
+      end
+
+      context 'when adding email that matches existing user' do
+        let!(:existing_user) { create(:user, email: 'existing@example.com') }
+        let(:resident) { create(:resident, :without_email) }
+        let(:params) { { email: 'existing@example.com' } }
+
+        it 'links to existing user without creating new one' do
+          expect {
+            ResidentUpdateService.update_resident(resident, params)
+          }.not_to change(User, :count)
+
+          resident.reload
+          expect(resident.user).to eq(existing_user)
+        end
+
+        it 'does not send welcome email' do
+          expect(ResidentMailer).not_to receive(:welcome_new_user)
+          ResidentUpdateService.update_resident(resident, params)
+        end
+      end
     end
   end
 
@@ -202,6 +275,72 @@ RSpec.describe ResidentUpdateService, type: :service do
       original_attributes = resident_with_email.attributes.dup
 
       expect(ResidentUpdateService.send(:should_send_notification?, resident_with_email, original_attributes)).to be false
+    end
+  end
+
+  describe '.resend_welcome_email' do
+    let(:user) { create(:user, email: 'test@example.com') }
+    let(:resident) { create(:resident, email: 'test@example.com', user: user) }
+
+    context 'when resident has user and email' do
+      it 'sends welcome email' do
+        expect(ResidentMailer).to receive(:welcome_new_user)
+          .with(resident, user)
+          .and_return(double(deliver_later: true))
+
+        expect(ResidentUpdateService.resend_welcome_email(resident)).to be true
+      end
+
+      it 'generates new login token' do
+        expect(UserCreationService).to receive(:generate_initial_login_token)
+          .with(user)
+          .and_return('new-token')
+
+        ResidentUpdateService.resend_welcome_email(resident)
+      end
+    end
+
+    context 'when resident has no user' do
+      let(:resident) { create(:resident, email: 'test@example.com', user: nil) }
+
+      it 'returns false' do
+        expect(ResidentUpdateService.resend_welcome_email(resident)).to be false
+      end
+
+      it 'does not send email' do
+        expect(ResidentMailer).not_to receive(:welcome_new_user)
+        ResidentUpdateService.resend_welcome_email(resident)
+      end
+    end
+
+    context 'when resident has no email' do
+      let(:resident) { create(:resident, :without_email, user: user) }
+
+      it 'returns false' do
+        expect(ResidentUpdateService.resend_welcome_email(resident)).to be false
+      end
+
+      it 'does not send email' do
+        expect(ResidentMailer).not_to receive(:welcome_new_user)
+        ResidentUpdateService.resend_welcome_email(resident)
+      end
+    end
+
+    context 'when email sending fails' do
+      before do
+        allow(ResidentMailer).to receive(:welcome_new_user)
+          .and_raise(StandardError.new('Email failed'))
+      end
+
+      it 'returns false' do
+        expect(ResidentUpdateService.resend_welcome_email(resident)).to be false
+      end
+
+      it 'logs the error' do
+        expect(Rails.logger).to receive(:error)
+          .with(/Failed to resend welcome email for resident #{resident.id}/)
+        ResidentUpdateService.resend_welcome_email(resident)
+      end
     end
   end
 end
