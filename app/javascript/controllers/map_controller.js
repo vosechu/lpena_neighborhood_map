@@ -10,7 +10,9 @@ export default class extends Controller {
     "canvas",
     "searchInput",
     "newResidentsToggle",
-    "modal"
+    "modal",
+    "searchToggle",
+    "searchBox"
   ]
 
   connect() {
@@ -38,6 +40,9 @@ export default class extends Controller {
     // Escape key handler for modal and popup
     document.addEventListener('keydown', this._handleEscape);
 
+    // Click outside handler for search box
+    document.addEventListener('click', this._handleClickOutside);
+
     // Current user ID (always present – this app requires authentication)
     this.currentUserId = this.element.dataset.mapCurrentUserId;
     if (this.currentUserId) {
@@ -48,6 +53,7 @@ export default class extends Controller {
   disconnect() {
     // Remove event listeners
     document.removeEventListener('keydown', this._handleEscape);
+    document.removeEventListener('click', this._handleClickOutside);
     this.modalTarget.removeEventListener('click', this._handleModalClick);
   }
 
@@ -64,10 +70,30 @@ export default class extends Controller {
       // Check if modal is open first - close modal if visible
       if (this.modalService.isVisible()) {
         this.modalService.hide();
+      } else if (!this.searchBoxTarget.classList.contains('hidden') && window.innerWidth < 768) {
+        // Close search box on mobile if open (both portrait and landscape)
+        this.toggleSearch();
       } else {
-        // Only close popup if no modal is open
+        // Only close popup if no modal is open and search is not open
         this.mapRenderer.closePopup();
       }
+    }
+  }
+
+  // Handle clicks outside the search box
+  _handleClickOutside = (e) => {
+    // Only handle mobile search box
+    if (window.innerWidth >= 768) return;
+
+    // Don't close if clicking the toggle button
+    if (this.searchToggleTarget.contains(e.target)) return;
+
+    // Don't close if clicking inside the search box
+    if (this.searchBoxTarget.contains(e.target)) return;
+
+    // Close the search box if it's open
+    if (!this.searchBoxTarget.classList.contains('hidden')) {
+      this.toggleSearch();
     }
   }
 
@@ -302,5 +328,26 @@ export default class extends Controller {
 
   applySearch() {
     this.updateHighlight();
+  }
+
+  // Toggle search box visibility on mobile
+  toggleSearch() {
+    const isLandscape = window.innerWidth > window.innerHeight;
+    this.searchBoxTarget.classList.toggle('hidden');
+
+    // Only toggle md:block in portrait mode
+    if (!isLandscape) {
+      this.searchBoxTarget.classList.toggle('md:block');
+    }
+
+    // Focus the search input when showing
+    if (!this.searchBoxTarget.classList.contains('hidden')) {
+      this.searchInputTarget.focus();
+    }
+  }
+
+  // Close modal (called by close button)
+  closeModal() {
+    this.modalService.hide();
   }
 }
