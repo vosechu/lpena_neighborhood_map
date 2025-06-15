@@ -53,10 +53,10 @@ namespace :update do
 
             # Handle two-digit years: 00-29 are 2000s, 30-99 are 1900s
             year_num = if year_num >= 30
-                        1900 + year_num  # 97 becomes 1997
-                      else
-                        2000 + year_num  # 24 becomes 2024
-                      end
+              1900 + year_num  # 97 becomes 1997
+            else
+              2000 + year_num  # 24 becomes 2024
+            end
 
             unless (1..12).include?(month_num)
               Rails.logger.info "Skipping house #{pcpa_uid} (#{attrs['SITE_ADDR']}): Invalid month '#{month}' in LATEST_SALE_DSP '#{latest_sale}'"
