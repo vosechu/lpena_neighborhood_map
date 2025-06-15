@@ -89,14 +89,14 @@ Avo.configure do |config|
 
   ## == Logger ==
   config.logger = -> {
-    file_logger = ActiveSupport::Logger.new(Rails.root.join("log", "avo.log"))
+    file_logger = ActiveSupport::Logger.new(Rails.root.join('log', 'avo.log'))
 
     # Use the same datetime format as Rails
-    file_logger.datetime_format = "%Y-%m-%d %H:%M:%S"
+    file_logger.datetime_format = '%Y-%m-%d %H:%M:%S'
 
     # Add request ID to logs if available
     file_logger.formatter = proc do |severity, time, progname, msg|
-      request_id = RequestStore.store[:request_id] || "N/A"
+      request_id = RequestStore.store[:request_id] || 'N/A'
       "[Avo] [#{request_id}] #{time}: #{msg}\n".tap do |i|
         # Also log to Rails logger for consistency
         Rails.logger.send(severity.downcase, i.strip)

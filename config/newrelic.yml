@@ -12,16 +12,11 @@ common: &default_settings
     enabled: true
     ignore_errors: "ActionController::RoutingError,Sinatra::NotFound,ActiveRecord::RecordNotFound"
 
-development:
-  <<: *default_settings
+test:
   monitor_mode: false
-  app_name: 'LPENA Neighborhood Map (Development)'
-  log_level: debug
-  transaction_tracer:
-    enabled: true
-    transaction_threshold: 4.0
-    record_sql: raw
-    stack_trace_threshold: 0.1
+
+development:
+  monitor_mode: false
 
 production:
   <<: *default_settings
