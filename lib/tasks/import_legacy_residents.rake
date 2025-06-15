@@ -5,7 +5,7 @@ require 'csv'
 namespace :import do
   desc 'Import residents and houses from legacy CSV'
   task legacy_residents: :environment do
-    csv_path = Rails.root.join('ClassCreator export - Cleaned up further.csv')
+    csv_path = Rails.root.join('cc_export_cleaned.csv')
 
     created_count = 0
     updated_count = 0

@@ -36,7 +36,7 @@ Rails.application.routes.draw do
   else
     # In production, protect Sidekiq with authentication
     Sidekiq::Web.use(Rack::Auth::Basic) do |user, password|
-      [ user, password ] == [ 'admin', ENV['SIDEKIQ_PASSWORD'] ]
+      [ user, password ] == [ 'vosechu@gmail.com', ENV['SIDEKIQ_PASSWORD'] ]
     end
     mount Sidekiq::Web => '/sidekiq'
   end

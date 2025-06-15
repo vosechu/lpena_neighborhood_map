@@ -72,3 +72,42 @@ jq '{features: .features}' cleaned.json > houses.json
 
 Read only the addresses and owners
 ```
+
+## Connection to production
+
+### Downloading the values from prod
+
+```
+railway login
+railway link # select lpena_neighborhood_map and then web
+railway shell
+env | sort > .env.production
+# Now sift through these and pull out the interesting values like the DATABASE_URL and REDIS_URL
+```
+
+### Connecting to prod
+
+```
+dotenv -f .env.production bin/rails import:legacy_residents
+# OR
+dotenv -f .env.production bin/rails console
+```
+
+## Downloading db backups
+
+Download
+```
+dotenv -f .env.production pg_dump -h trolley.proxy.rlwy.net -U postgres -p 34534 -d railway --data-only > production_backup.sql
+```
+
+Restore
+```
+DISABLE_DATABASE_ENVIRONMENT_CHECK=1 dotenv -f .env.production rails db:drop db:create
+dotenv -f .env.production psql -h trolley.proxy.rlwy.net -U postgres -p 34534 -d railway < production_backup.sql
+```
+
+Restoring prod to local env
+```
+bin/rails db:drop db:create
+
+```
