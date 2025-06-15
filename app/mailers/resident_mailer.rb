@@ -1,5 +1,6 @@
 class ResidentMailer < ApplicationMailer
   default from: 'noreply@neighborhoodmap.local'
+  queue_as :critical
 
   # Class method to handle conditional email sending
   def self.deliver_data_change_notification(resident, changes)
