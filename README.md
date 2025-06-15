@@ -97,17 +97,21 @@ dotenv -f .env.production bin/rails console
 
 Download
 ```
-dotenv -f .env.production pg_dump -h trolley.proxy.rlwy.net -U postgres -p 34534 -d railway --data-only > production_backup.sql
+dotenv -f .env.production pg_dump -h trolley.proxy.rlwy.net -U postgres -p 34534 -d railway > production_backup_full.sql
+dotenv -f .env.production pg_dump -h trolley.proxy.rlwy.net -U postgres -p 34534 -d railway --data-only > production_backup_data_only.sql
 ```
 
-Restore
+Restore TO PROD
 ```
 DISABLE_DATABASE_ENVIRONMENT_CHECK=1 dotenv -f .env.production rails db:drop db:create
 dotenv -f .env.production psql -h trolley.proxy.rlwy.net -U postgres -p 34534 -d railway < production_backup.sql
 ```
 
-Restoring prod to local env
+Restoring prod backups to local env
 ```
-bin/rails db:drop db:create
-
+RAILS_ENV=development bin/rails db:drop db:create
+psql -d lpena_neighborhood_map_development < production_backup_full.sql
+# This will ensure that later runs don't think that this is a prod database.
+# See https://github.com/rails/rails/issues/34041#issuecomment-426817146
+RAILS_ENV=development bin/rails db:environment:set
 ```
