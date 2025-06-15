@@ -67,6 +67,7 @@ Rails.application.configure do
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
 
+  # Log to STDOUT in test environment
+  config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT))
   config.log_level = :debug
-  config.logger = ActiveSupport::Logger.new(Rails.root.join('log/test.log'))
 end

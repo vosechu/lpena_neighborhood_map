@@ -30,6 +30,17 @@ module LpenaNeighborhoodMap
     # Use Sidekiq for background jobs
     config.active_job.queue_adapter = :sidekiq
 
+    # Configure semantic logging
+    config.semantic_logger.application = 'lpena_neighborhood_map'
+    config.semantic_logger.environment = Rails.env
+    config.log_level = ENV.fetch('RAILS_LOG_LEVEL', 'info')
+
+    # Use JSON logging in production
+    if Rails.env.production?
+      config.rails_semantic_logger.add_file_appender = false
+      config.semantic_logger.add_appender(io: $stdout, formatter: :json)
+    end
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

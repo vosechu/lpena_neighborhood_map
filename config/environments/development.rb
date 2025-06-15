@@ -63,6 +63,11 @@ Rails.application.configure do
   # Annotate rendered view with file names.
   config.action_view.annotate_rendered_view_with_filenames = true
 
+  # Configure semantic logging for development
+  config.rails_semantic_logger.add_file_appender = true
+  config.semantic_logger.add_appender(io: STDOUT, formatter: :color)
+  config.log_level = :debug
+
   # Uncomment if you wish to allow Action Cable access from any origin.
   # config.action_cable.disable_request_forgery_protection = true
 

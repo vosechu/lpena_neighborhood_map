@@ -47,6 +47,8 @@ gem 'stimulus-rails'
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', require: false
 
+# Structured logging for Rails applications
+gem 'rails_semantic_logger'
 
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem 'thruster', require: false
