@@ -7,7 +7,7 @@ Avo.configure do |config|
   # config.prefix_path = "/internal"
 
   # Where should the user be redirected when visiting the `/avo` url
-  # config.home_path = nil
+  config.home_path = '/avo/resources/houses'
 
   ## == Licensing ==
   # config.license_key = ENV['AVO_LICENSE_KEY']
@@ -37,7 +37,7 @@ Avo.configure do |config|
   #   search: 'search?',
   # }
   # config.raise_error_on_missing_policy = false
-  config.authorization_client = nil
+  config.authorization_client = :cancancan
   config.explicit_authorization = true
 
   ## == Localization ==
@@ -88,18 +88,23 @@ Avo.configure do |config|
   # end
 
   ## == Logger ==
-  # config.logger = -> {
-  #   file_logger = ActiveSupport::Logger.new(Rails.root.join("log", "avo.log"))
-  #
-  #   file_logger.datetime_format = "%Y-%m-%d %H:%M:%S"
-  #   file_logger.formatter = proc do |severity, time, progname, msg|
-  #     "[Avo] #{time}: #{msg}\n".tap do |i|
-  #       puts i
-  #     end
-  #   end
-  #
-  #   file_logger
-  # }
+  config.logger = -> {
+    file_logger = ActiveSupport::Logger.new(Rails.root.join("log", "avo.log"))
+
+    # Use the same datetime format as Rails
+    file_logger.datetime_format = "%Y-%m-%d %H:%M:%S"
+
+    # Add request ID to logs if available
+    file_logger.formatter = proc do |severity, time, progname, msg|
+      request_id = RequestStore.store[:request_id] || "N/A"
+      "[Avo] [#{request_id}] #{time}: #{msg}\n".tap do |i|
+        # Also log to Rails logger for consistency
+        Rails.logger.send(severity.downcase, i.strip)
+      end
+    end
+
+    file_logger
+  }
 
   ## == Customization ==
   config.click_row_to_view_record = true

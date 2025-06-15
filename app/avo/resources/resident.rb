@@ -4,15 +4,28 @@ class Avo::Resources::Resident < Avo::BaseResource
   # Enable search across multiple fields
   self.search = {
     query: -> {
-      query.ransack(
+      # First get the distinct IDs that match our search
+      distinct_ids = query.ransack(
         official_name_cont: params[:q],
         display_name_cont: params[:q],
         email_cont: params[:q],
         phone_cont: params[:q],
+        house_street_name_cont: params[:q],
+        house_street_number_eq: params[:q],
         m: 'or'
-      ).result(distinct: false)
+      ).result.select('DISTINCT residents.id').pluck(:id)
+
+      # Then fetch the full records for those IDs
+      query.where(id: distinct_ids)
     }
   }
+
+  # Define how the record should be displayed in search results
+  self.title = :to_s
+
+  def to_s
+    record.display_name.presence || record.official_name
+  end
 
   def fields
     # Basic Info
