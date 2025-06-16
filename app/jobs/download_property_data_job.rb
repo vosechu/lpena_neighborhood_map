@@ -54,23 +54,25 @@ class DownloadPropertyDataJob < ApplicationJob
               Rails.logger.info "Updated house #{pcpa_uid}"
               Rails.logger.info "Changes: #{house.saved_changes.except('updated_at').inspect}"
             end
-
-            # Update ownership if house was created or updated
-            ownership_changes = UpdateHouseOwnershipService.call(
-              house: house,
-              owner1: attrs['OWNER1'],
-              owner2: attrs['OWNER2']
-            )
-
-            if ownership_changes[:residents_added].any?
-              Rails.logger.info "Added residents: #{ownership_changes[:residents_added].map(&:official_name).join(', ')}"
-            end
-            if ownership_changes[:residents_removed].any?
-              Rails.logger.info "Marked residents as moved out: #{ownership_changes[:residents_removed].map(&:official_name).join(', ')}"
-            end
           else
             stats[:unchanged] += 1
             Rails.logger.debug "House #{pcpa_uid} unchanged"
+          end
+
+          # Always check for ownership changes
+          ownership_changes = UpdateHouseOwnershipService.call(
+            house: house,
+            owner1: attrs['OWNER1'],
+            owner2: attrs['OWNER2']
+          )
+
+          if ownership_changes[:residents_added].any?
+            stats[:created] += ownership_changes[:residents_added].size
+            Rails.logger.info "Added residents: #{ownership_changes[:residents_added].map(&:official_name).join(', ')}"
+          end
+          if ownership_changes[:residents_removed].any?
+            stats[:updated] += ownership_changes[:residents_removed].size
+            Rails.logger.info "Marked residents as moved out: #{ownership_changes[:residents_removed].map(&:official_name).join(', ')}"
           end
         rescue StandardError => e
           stats[:errors] += 1

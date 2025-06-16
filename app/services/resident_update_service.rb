@@ -24,23 +24,6 @@ class ResidentUpdateService
     end
   end
 
-  # Class method to resend welcome email
-  def self.resend_welcome_email(resident)
-    return false unless resident.user.present? && resident.email.present?
-
-    # Generate a new login token
-    login_token = UserCreationService.generate_initial_login_token(resident.user)
-
-    # Send welcome email
-    ResidentMailer.welcome_new_user(resident, resident.user).deliver_later
-
-    Rails.logger.info "Resent welcome email to #{resident.email} for resident #{resident.id}"
-    true
-  rescue => e
-    Rails.logger.error "Failed to resend welcome email for resident #{resident.id}: #{e.message}"
-    false
-  end
-
   private
 
   def self.handle_email_change(resident, original_email)

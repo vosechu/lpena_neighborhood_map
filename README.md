@@ -118,9 +118,10 @@ RAILS_ENV=development bin/rails db:environment:set
 
 ## Activating an email for a resident that somehow didn't get a user
 
-```
-resident = Resident.find(your_resident_id)
+If the resident already has a user, you'll need to remove the email first and then update it again to trigger the welcome email:
 
-# This will create a user and send the welcome email
-ResidentUpdateService.update_resident(resident, { email: resident.email })
+```ruby
+resident_id = 844
+resident = Resident.find(resident_id)
+ResidentMailer.welcome_new_user(resident, resident.user).deliver_later
 ```
