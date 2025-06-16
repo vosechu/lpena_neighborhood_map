@@ -31,6 +31,7 @@ class Resident < ApplicationRecord
   scope :current, -> { where(moved_out_at: nil).where('hidden IS NOT TRUE') }
   # Only residents that are not hidden
   scope :visible, -> { where('hidden IS NOT TRUE') }
+  scope :not_moved_out, -> { where(moved_out_at: nil) }
 
   def self.ransackable_attributes(auth_object = nil)
     [ 'display_name', 'email', 'id', 'official_name', 'phone', 'birthdate', 'homepage', 'skills', 'comments' ]

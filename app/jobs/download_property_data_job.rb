@@ -56,7 +56,6 @@ class DownloadPropertyDataJob < ApplicationJob
             end
           else
             stats[:unchanged] += 1
-            Rails.logger.debug "House #{pcpa_uid} unchanged"
           end
 
           # Always check for ownership changes

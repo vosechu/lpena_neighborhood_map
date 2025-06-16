@@ -25,14 +25,18 @@ class UpdateHouseOwnershipService
   private
 
   def ownership_changed?
-    current_owners = @house.residents.current.order(:created_at).pluck(:official_name)
+    current_owners = @house.residents.not_moved_out.order(:created_at).pluck(:official_name)
     new_owners = [ @owner1, @owner2 ].compact
 
-    current_owners.sort != new_owners.sort
+    # Normalize names only for comparison
+    normalized_current = current_owners.map { |name| name.strip.upcase }.sort
+    normalized_new = new_owners.map { |name| name.strip.upcase }.sort
+
+    normalized_current != normalized_new
   end
 
   def mark_current_residents_as_moved_out
-    @house.residents.current.each do |resident|
+    @house.residents.not_moved_out.each do |resident|
       resident.update!(moved_out_at: @current_time)
       @changes[:residents_removed] << resident
     end
@@ -52,7 +56,7 @@ class UpdateHouseOwnershipService
 
   def create_resident(name)
     @house.residents.create!(
-      official_name: name,
+      official_name: name,  # Store the exact value from the city
       first_seen_at: @current_time
     )
   end
