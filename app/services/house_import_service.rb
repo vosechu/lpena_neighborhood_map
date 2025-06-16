@@ -29,8 +29,7 @@ class HouseImportService
       zip: extract_zip,
       latitude: @attrs['LATITUDE'],
       longitude: @attrs['LONGITUDE'],
-      boundary_geometry: @geometry,  # Store raw GIS JSON for frontend rendering
-      last_import_at: Time.current
+      boundary_geometry: @geometry  # Store raw GIS JSON for frontend rendering
     }
   end
 

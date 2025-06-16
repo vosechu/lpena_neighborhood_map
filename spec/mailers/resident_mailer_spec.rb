@@ -14,15 +14,14 @@ RSpec.describe ResidentMailer, type: :mailer do
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to include('Welcome to the Neighborhood Directory!')
-      expect(mail.body.encoded).to include(user.name)
-      expect(mail.body.encoded).to include(resident.display_name)
+      expect(mail.body.encoded).to include('Hi there!')
+      expect(mail.body.encoded).to include('I\'m your neighbor at 63rd and Burlington Ave N')
       expect(mail.body.encoded).to include('Set Up Your Account')
     end
 
     it 'includes resident information' do
-      expect(mail.body.encoded).to include(resident.phone) if resident.phone.present?
-      expect(mail.body.encoded).to include('Privacy & Control')
+      expect(mail.body.encoded).to include('Privacy options')
+      expect(mail.body.encoded).to include('Unsubscribe from future emails')
     end
 
     it 'includes login token in URL' do

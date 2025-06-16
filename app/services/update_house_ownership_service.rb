@@ -43,8 +43,7 @@ class UpdateHouseOwnershipService
   def create_resident(name)
     @house.residents.create!(
       official_name: name,
-      first_seen_at: @current_time,
-      last_import_at: @current_time
+      first_seen_at: @current_time
     )
   end
 end

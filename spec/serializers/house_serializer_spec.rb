@@ -27,7 +27,7 @@ RSpec.describe HouseSerializer do
       created_at: Time.now,
       updated_at: Time.now
     )
-    allow(house).to receive_message_chain(:residents, :current).and_return([resident])
+    allow(house).to receive_message_chain(:residents, :current).and_return([ resident ])
     allow(house).to receive_message_chain(:residents, :any?).and_return(false)
     allow(house).to receive(:events).and_return([])
     allow(house).to receive(:icon_type).and_return(nil)

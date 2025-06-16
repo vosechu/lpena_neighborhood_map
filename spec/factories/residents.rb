@@ -3,7 +3,6 @@ FactoryBot.define do
     association :house
     sequence(:official_name) { |n| "Resident #{n}" }
     first_seen_at { Time.current }
-    last_import_at { Time.current }
     display_name { "Test User" }
     phone { "555-1234" }
     sequence(:email) { |n| "user#{n}@example.com" }

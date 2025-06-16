@@ -63,7 +63,6 @@ class Avo::Resources::Resident < Avo::BaseResource
     # Timestamps
     field :first_seen_at, as: :date_time, sortable: true
     field :moved_out_at, as: :date_time, sortable: true
-    field :last_import_at, as: :date_time, sortable: true
   end
 
   def filters

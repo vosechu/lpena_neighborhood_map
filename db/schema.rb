@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_14_142022) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_16_121336) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -24,7 +24,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_14_142022) do
     t.decimal "latitude", precision: 10, scale: 8
     t.decimal "longitude", precision: 11, scale: 8
     t.json "boundary_geometry"
-    t.datetime "last_import_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["pcpa_uid"], name: "index_houses_on_pcpa_uid", unique: true
@@ -37,7 +36,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_14_142022) do
     t.string "secondary_official_name"
     t.datetime "first_seen_at", null: false
     t.datetime "moved_out_at"
-    t.datetime "last_import_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "display_name"

@@ -33,11 +33,7 @@ class Avo::Resources::House < Avo::BaseResource
     field :state, as: :text, sortable: true
     field :zip, as: :text, sortable: true
     field :pcpa_uid, as: :text, sortable: true, help: 'Property Control Parcel Area UID'
-    field :latitude, as: :number, format: '%.6f'
-    field :longitude, as: :number, format: '%.6f'
     field :residents, as: :has_many, searchable: true
     field :users, as: :has_many, through: :residents
-    field :boundary_geometry, as: :code, hide_on: [ :index ]
-    field :last_import_at, as: :date_time, sortable: true
   end
 end
