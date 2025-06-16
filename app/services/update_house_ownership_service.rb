@@ -8,15 +8,18 @@ class UpdateHouseOwnershipService
     @owner1 = owner1
     @owner2 = owner2
     @current_time = Time.current
+    @changes = { residents_added: [], residents_removed: [] }
   end
 
   def call
-    return unless ownership_changed?
+    return @changes unless ownership_changed?
 
     ActiveRecord::Base.transaction do
       mark_current_residents_as_moved_out
       create_new_residents if @owner1.present?
     end
+
+    @changes
   end
 
   private
@@ -29,15 +32,22 @@ class UpdateHouseOwnershipService
   end
 
   def mark_current_residents_as_moved_out
-    @house.residents.current.update_all(moved_out_at: @current_time)
+    @house.residents.current.each do |resident|
+      resident.update!(moved_out_at: @current_time)
+      @changes[:residents_removed] << resident
+    end
   end
 
   def create_new_residents
     # Create first owner
-    create_resident(@owner1)
+    resident = create_resident(@owner1)
+    @changes[:residents_added] << resident
 
     # Create second owner if present
-    create_resident(@owner2) if @owner2.present?
+    if @owner2.present?
+      resident = create_resident(@owner2)
+      @changes[:residents_added] << resident
+    end
   end
 
   def create_resident(name)
