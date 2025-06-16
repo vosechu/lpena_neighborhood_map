@@ -25,7 +25,8 @@ class UpdateHouseOwnershipService
   private
 
   def ownership_changed?
-    current_owners = @house.residents.not_moved_out.order(:created_at).pluck(:official_name)
+    # Only compare residents with official names (from city data)
+    current_owners = @house.residents.not_moved_out.where.not(official_name: nil).order(:created_at).pluck(:official_name)
     new_owners = [ @owner1, @owner2 ].compact
 
     # Normalize names only for comparison
@@ -36,6 +37,8 @@ class UpdateHouseOwnershipService
   end
 
   def mark_current_residents_as_moved_out
+    # AIDEV-NOTE: Up above we only check the residents with official names (from city data).
+    # But if all the official names change, then all the extra residents are probably moving out too.
     @house.residents.not_moved_out.each do |resident|
       resident.update!(moved_out_at: @current_time)
       @changes[:residents_removed] << resident
