@@ -1,64 +1,15 @@
-<h1>Welcome to the Neighborhood Directory!</h1>
+<h1>Hi there!</h1>
 
-<p>Hello <%= @user.name %>,</p>
+<p>I'm your neighbor at 63rd and Burlington Ave N. I made an app for our neighborhood and I'm excited to share it with you!</p>
 
-<p>Someone in your neighborhood has added you to our local neighborhood directory and thought you might like to join our community online!</p>
+<p>I'm trying to make it easy, so I created an account for you already. All you have to do is click this link and set a password! (I promise I'm not trying to steal your passwords, but just in case, you probably shouldn't reuse any important passwords for some random email from a neighbor)</p>
 
-<h2>What is this website?</h2>
-<p>Our neighborhood directory is a simple way for neighbors to:</p>
-<ul>
-  <li><strong>Connect with each other</strong> - Find contact info and learn about your neighbors' skills</li>
-  <li><strong>Share useful information</strong> - Let people know what you're good at or interested in</li>
-  <li><strong>Build community</strong> - Strengthen connections in our neighborhood</li>
-  <li><strong>Stay informed</strong> - See who lives where and how to reach them</li>
-</ul>
-
-<p><strong>This is run by your neighbors, for you</strong> - not some big corporation. It's a grassroots effort to help our community stay connected.</p>
-
-<h2>Your Information</h2>
-<p>Here's what we currently have on file for you:</p>
-<ul>
-  <li><strong>Name:</strong> <%= @resident.display_name.presence || @resident.official_name %></li>
-  <li><strong>Email:</strong> <%= @resident.email %></li>
-  <% if @resident.phone.present? %>
-    <li><strong>Phone:</strong> <%= @resident.phone %></li>
-  <% end %>
-  <% if @resident.homepage.present? %>
-    <li><strong>Website:</strong> <%= link_to @resident.homepage, @resident.homepage %></li>
-  <% end %>
-  <% if @resident.skills.present? %>
-    <li><strong>Skills/Interests:</strong> <%= @resident.skills %></li>
-  <% end %>
-</ul>
-
-<h2>Activate Your Account</h2>
-<p><strong>To get started, click here to set up your password:</strong></p>
 <p><%= link_to "Set Up Your Account", @login_url, style: "background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;" %></p>
 
-<p>This link will let you create your password and start using the directory.</p>
+<p>This is like a wiki for our neighborhood; anyone can enter details for anyone else. If someone changes your details, you'll get an email about it so you can see what was changed and by whom.</p>
 
-<h2>What You Can Do</h2>
-<p>Once you're set up, you can:</p>
-<ul>
-  <li><strong>View the neighborhood map</strong> and see information about your neighbors</li>
-  <li><strong>Update your own information</strong> - add skills, contact info, or a personal website</li>
-  <li><strong>Add information about other neighbors</strong> you meet (including their email to invite them too!)</li>
-  <li><strong>Control your privacy</strong> - hide any information you don't want to share</li>
-</ul>
-
-<h2>Privacy & Control</h2>
-<p>We respect your privacy. You can:</p>
-<ul>
-  <li>Hide any information you don't want to share</li>
-  <li>Update or correct your information anytime</li>
-  <li>Remove yourself from the directory completely if you prefer</li>
-</ul>
-
-<p>If you don't want to be part of the directory, just ignore this email or contact vosechu@gmail.com.</p>
-
-<p>Welcome to the neighborhood!</p>
-
-<p>—Your neighbors</p>
+<p>I hope you enjoy my little app! Love you all!</p>
+<p>Chuck Lauer Vose @ 63rd and Burlington Ave N</p>
 
 <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
 

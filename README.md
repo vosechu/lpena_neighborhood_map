@@ -115,3 +115,12 @@ psql -d lpena_neighborhood_map_development < production_backup_full.sql
 # See https://github.com/rails/rails/issues/34041#issuecomment-426817146
 RAILS_ENV=development bin/rails db:environment:set
 ```
+
+## Activating an email for a resident that somehow didn't get a user
+
+```
+resident = Resident.find(your_resident_id)
+
+# This will create a user and send the welcome email
+ResidentUpdateService.update_resident(resident, { email: resident.email })
+```
