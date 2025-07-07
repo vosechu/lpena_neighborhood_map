@@ -29,9 +29,15 @@ class UpdateHouseOwnershipService
     current_owners = @house.residents.not_moved_out.where.not(official_name: nil).order(:created_at).pluck(:official_name)
     new_owners = [ @owner1, @owner2 ].compact
 
-    # Normalize names only for comparison
-    normalized_current = current_owners.map { |name| name.strip.upcase }.sort
-    normalized_new = new_owners.map { |name| name.strip.upcase }.sort
+    # Normalize names only for comparison - handle nil/empty values
+    normalized_current = current_owners.map { |name| name&.strip&.upcase }.compact.sort
+    normalized_new = new_owners.map { |name| name&.strip&.upcase }.compact.sort
+
+    # Log the comparison for debugging
+    Rails.logger.debug "Ownership comparison for house #{@house.pcpa_uid}:"
+    Rails.logger.debug "  Current owners: #{normalized_current.inspect}"
+    Rails.logger.debug "  New owners: #{normalized_new.inspect}"
+    Rails.logger.debug "  Changed: #{normalized_current != normalized_new}"
 
     normalized_current != normalized_new
   end
@@ -42,18 +48,23 @@ class UpdateHouseOwnershipService
     @house.residents.not_moved_out.each do |resident|
       resident.update!(moved_out_at: @current_time)
       @changes[:residents_removed] << resident
+      Rails.logger.info "Marked resident #{resident.id} (#{resident.official_name}) as moved out"
     end
   end
 
   def create_new_residents
-    # Create first owner
-    resident = create_resident(@owner1)
-    @changes[:residents_added] << resident
+    # Create first owner if present and not empty
+    if @owner1.present? && @owner1.strip.present?
+      resident = create_resident(@owner1)
+      @changes[:residents_added] << resident
+      Rails.logger.info "Created new resident: #{resident.official_name}"
+    end
 
-    # Create second owner if present
-    if @owner2.present?
+    # Create second owner if present and not empty
+    if @owner2.present? && @owner2.strip.present?
       resident = create_resident(@owner2)
       @changes[:residents_added] << resident
+      Rails.logger.info "Created new resident: #{resident.official_name}"
     end
   end
 
