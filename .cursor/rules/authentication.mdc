@@ -1,6 +1,5 @@
 ---
-description:
-globs:
+description: authentication and authorization rules, permissions, capabilities
 alwaysApply: false
 ---
 # Authentication and authorization
