@@ -69,5 +69,9 @@ FactoryBot.define do
     trait :hidden do
       hidden { true }
     end
+
+    trait :without_official_name do
+      official_name { nil }
+    end
   end
 end

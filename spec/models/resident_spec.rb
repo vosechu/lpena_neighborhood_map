@@ -10,12 +10,6 @@ RSpec.describe Resident do
       expect(resident.errors[:house]).to include("can't be blank")
     end
 
-    it 'requires an official_name' do
-      resident.official_name = nil
-      expect(resident).not_to be_valid
-      expect(resident.errors[:official_name]).to include("can't be blank")
-    end
-
     it 'requires first_seen_at' do
       resident.first_seen_at = nil
       expect(resident).not_to be_valid

@@ -12,7 +12,6 @@ class Resident < ApplicationRecord
   validates :homepage, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), allow_blank: true }, if: -> { homepage.present? }
 
   # Core data
-  validates :official_name, presence: true
   validates :first_seen_at, presence: true
   validates :house, presence: { message: "can't be blank" }
 

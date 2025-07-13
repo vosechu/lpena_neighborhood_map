@@ -1,8 +1,8 @@
 FactoryBot.define do
   factory :house do
     sequence(:pcpa_uid) { |n| "PCPA#{n}" }
-    street_number { 6573 }
-    street_name { '1ST AVE N' }
+    sequence(:street_number) { |n| 6573 + n }
+    sequence(:street_name) { |n| "1st Ave N" }
     city { 'St Petersburg' }
     state { 'FL' }
     zip { '33710' }

@@ -1,12 +1,13 @@
 class UpdateHouseOwnershipService
-  def self.call(house:, owner1:, owner2: nil)
-    new(house: house, owner1: owner1, owner2: owner2).call
-  end
-
-  def initialize(house:, owner1:, owner2: nil)
+  def initialize(house:, owner1_name:, owner2_name: nil)
     @house = house
-    @owner1 = owner1
-    @owner2 = owner2
+    # AIDEV-NOTE: Only compare residents with official names (from city data)
+    # There may be other residents without official names, but they're usually
+    # doggos or kids, so the city doesn't include their names in the property info.
+    @current_residents = Resident.where(house_id: @house.id).not_moved_out
+    @current_owners = @current_residents.where.not(official_name: [ nil, '' ]).distinct
+    @owner1_name = owner1_name
+    @owner2_name = owner2_name
     @current_time = Time.current
     @changes = { residents_added: [], residents_removed: [] }
   end
@@ -16,59 +17,51 @@ class UpdateHouseOwnershipService
 
     ActiveRecord::Base.transaction do
       mark_current_residents_as_moved_out
-      create_new_residents if @owner1.present?
+      create_new_residents if @owner1_name.present?
     end
 
     @changes
   end
 
-  private
+  def current_owner_names
+    @current_owners.map { |owner| owner&.official_name&.strip&.upcase }.compact.sort
+  end
+
+  def new_owner_names
+    [ @owner1_name, @owner2_name ].compact.map { |name| name&.strip&.upcase }.reject(&:blank?).sort
+  end
 
   def ownership_changed?
-    # Only compare residents with official names (from city data)
-    current_owners = @house.residents.not_moved_out.where.not(official_name: nil).order(:created_at).pluck(:official_name)
-    new_owners = [ @owner1, @owner2 ].compact
-
-    # Normalize names only for comparison - handle nil/empty values
-    normalized_current = current_owners.map { |name| name&.strip&.upcase }.compact.sort
-    normalized_new = new_owners.map { |name| name&.strip&.upcase }.compact.sort
-
-    # Log the comparison for debugging
-    Rails.logger.debug "Ownership comparison for house #{@house.pcpa_uid}:"
-    Rails.logger.debug "  Current owners: #{normalized_current.inspect}"
-    Rails.logger.debug "  New owners: #{normalized_new.inspect}"
-    Rails.logger.debug "  Changed: #{normalized_current != normalized_new}"
-
-    normalized_current != normalized_new
+    current_owner_names != new_owner_names
   end
+
+  private
 
   def mark_current_residents_as_moved_out
     # AIDEV-NOTE: Up above we only check the residents with official names (from city data).
     # But if all the official names change, then all the extra residents are probably moving out too.
-    @house.residents.not_moved_out.each do |resident|
+    @current_residents.each do |resident|
       resident.update!(moved_out_at: @current_time)
       @changes[:residents_removed] << resident
-      Rails.logger.info "Marked resident #{resident.id} (#{resident.official_name}) as moved out"
     end
   end
 
   def create_new_residents
     # Create first owner if present and not empty
-    if @owner1.present? && @owner1.strip.present?
-      resident = create_resident(@owner1)
+    if @owner1_name.present? && @owner1_name.strip.present?
+      resident = create_resident(@owner1_name)
       @changes[:residents_added] << resident
-      Rails.logger.info "Created new resident: #{resident.official_name}"
     end
 
     # Create second owner if present and not empty
-    if @owner2.present? && @owner2.strip.present?
-      resident = create_resident(@owner2)
+    if @owner2_name.present? && @owner2_name.strip.present?
+      resident = create_resident(@owner2_name)
       @changes[:residents_added] << resident
-      Rails.logger.info "Created new resident: #{resident.official_name}"
     end
   end
 
   def create_resident(name)
+    raise ArgumentError, 'official_name is required for imported residents' if name.blank?
     @house.residents.create!(
       official_name: name,  # Store the exact value from the city
       first_seen_at: @current_time
