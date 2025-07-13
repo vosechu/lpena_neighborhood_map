@@ -2,137 +2,112 @@ require 'rails_helper'
 
 RSpec.describe DownloadPropertyDataJob do
   describe '#perform' do
-    let(:connection) { instance_double(Connections::PcpaGisConnection) }
-    let(:mock_data) do
-      {
-        'features' => [
-          {
-            'attributes' => {
-              'PCPA_UID' => '123',
-              'SITE_ADDR' => '6573 1st Ave N',
-              'SITE_CITY' => 'St Petersburg',
-              'SITE_CITYZIP' => 'St Petersburg, FL 33710',
-              'LATITUDE' => 27.772074174,
-              'LONGITUDE' => -82.728144652,
-              'OWNER1' => 'SMITH, JOHN',
-              'OWNER2' => 'SMITH, JANE'
-            },
-            'geometry' => {
-              'rings' => [
-                [ [ -82.728144652, 27.772074174 ], [ -82.728144652, 27.772074174 ] ]
-              ]
-            }
-          }
-        ]
-      }
-    end
-
-    before do
+    it 'fetches property data from the PCPA GIS connection' do
+      connection = instance_double(Connections::PcpaGisConnection)
       allow(Connections::PcpaGisConnection).to receive(:new).and_return(connection)
-      allow(connection).to receive(:fetch_properties).and_return(mock_data)
-      allow(Rails.logger).to receive(:info)
-      allow(Rails.logger).to receive(:error)
+      expect(connection).to receive(:fetch_properties).and_return('features' => [])
+
+      described_class.perform_now
     end
 
-    around do |example|
-      Timecop.freeze(Time.local(2024, 1, 1, 12, 0, 0)) do
-        example.run
-      end
+    it 'calls HouseImportService for each property' do
+      connection = instance_double(Connections::PcpaGisConnection)
+      allow(Connections::PcpaGisConnection).to receive(:new).and_return(connection)
+      features = [
+        { 'attributes' => { 'SITE_ADDR' => '123 Main St' } },
+        { 'attributes' => { 'SITE_ADDR' => '456 Oak Ave' } }
+      ]
+      allow(connection).to receive(:fetch_properties).and_return('features' => features)
+      allow(UpdateHouseOwnershipService).to receive(:call).and_return({ residents_added: [], residents_removed: [] })
+      expect(HouseImportService).to receive(:call).with(features[0]).ordered
+      expect(HouseImportService).to receive(:call).with(features[1]).ordered
+
+      described_class.perform_now
     end
 
-    it 'creates new houses and residents' do
-      expect {
-        expect {
-          described_class.perform_now
-        }.to change(House, :count).by(1)
-      }.to change(Resident, :count).by(2)  # Two owners = two residents
+    it 'calls UpdateHouseOwnershipService for each property' do
+      connection = instance_double(Connections::PcpaGisConnection)
+      allow(Connections::PcpaGisConnection).to receive(:new).and_return(connection)
+      features = [
+        { 'attributes' => { 'SITE_ADDR' => '123 Main St', 'OWNER1' => 'A', 'OWNER2' => 'B' } },
+        { 'attributes' => { 'SITE_ADDR' => '456 Oak Ave', 'OWNER1' => 'C', 'OWNER2' => 'D' } }
+      ]
+      allow(connection).to receive(:fetch_properties).and_return('features' => features)
+      house1 = instance_double(House)
+      house2 = instance_double(House)
+      allow(HouseImportService).to receive(:call).with(features[0]).and_return(house1)
+      allow(HouseImportService).to receive(:call).with(features[1]).and_return(house2)
 
-      house = House.last
-      expect(house.pcpa_uid).to eq('123')
-      expect(house.street_number).to eq(6573)
-      expect(house.street_name).to eq('1st Ave N')
-      expect(house.city).to eq('St Petersburg')
-      expect(house.state).to eq('FL')
-      expect(house.zip).to eq('33710')
-      expect(house.latitude).to be_within(0.000001).of(27.772074174)
-      expect(house.longitude).to be_within(0.000001).of(-82.728144652)
-      expect(house.boundary_geometry).to eq(mock_data['features'].first['geometry'])
+      # Verify that UpdateHouseOwnershipService is called with the correct arguments
+      # extracted from the attributes
+      expect(UpdateHouseOwnershipService).to receive(:call).with(
+        house: house1,
+        owner1: 'A',
+        owner2: 'B'
+      ).ordered
+      expect(UpdateHouseOwnershipService).to receive(:call).with(
+        house: house2,
+        owner1: 'C',
+        owner2: 'D'
+      ).ordered
 
-      residents = house.residents.order(:created_at)
-      expect(residents.count).to eq(2)
-
-      # First owner
-      expect(residents.first.attributes).to include(
-        'official_name' => 'SMITH, JOHN',
-        'moved_out_at' => nil
-      )
-
-      # Second owner
-      expect(residents.second.attributes).to include(
-        'official_name' => 'SMITH, JANE',
-        'moved_out_at' => nil
-      )
+      described_class.perform_now
     end
 
-    context 'when house exists but owners change' do
-      let!(:existing_house) do
-        House.create!(
-          pcpa_uid: '123',
-          street_number: 6573,
-          street_name: '1ST',
-          city: 'St Petersburg',
-          state: 'FL',
-          zip: '33710',
-          latitude: 27.772074174,
-          longitude: -82.728144652,
-          boundary_geometry: mock_data['features'].first['geometry']
-        )
-      end
-      let!(:old_resident1) do
-        existing_house.residents.create!(
-          official_name: 'OLD, OWNER1',
-          first_seen_at: 1.month.ago
-        )
-      end
-      let!(:old_resident2) do
-        existing_house.residents.create!(
-          official_name: 'OLD, OWNER2',
-          first_seen_at: 1.month.ago
-        )
-      end
+    it 'bails out if the PCPA GIS connection fails' do
+      connection = instance_double(Connections::PcpaGisConnection)
+      allow(Connections::PcpaGisConnection).to receive(:new).and_return(connection)
+      allow(connection).to receive(:fetch_properties).and_raise(StandardError, 'Connection failed')
 
-      it 'updates house and creates new residents' do
-        expect {
-          described_class.perform_now
-        }.to change(Resident, :count).by(2)
-
-        [ old_resident1, old_resident2 ].each do |resident|
-          resident.reload
-          expect(resident.moved_out_at).to eq(Time.current)
-        end
-
-        new_residents = existing_house.residents.current.order(:created_at)
-        expect(new_residents.map(&:official_name)).to eq([ 'SMITH, JOHN', 'SMITH, JANE' ])
-      end
+      expect { described_class.perform_now }.to raise_error(StandardError, 'Connection failed')
     end
 
-    context 'when an error occurs' do
-      let(:error) { StandardError.new('API Error') }
+    it 'continues processing other properties if a single property raises an error' do
+      connection = instance_double(Connections::PcpaGisConnection)
+      allow(Connections::PcpaGisConnection).to receive(:new).and_return(connection)
+      features = [
+        { 'attributes' => { 'SITE_ADDR' => '123 Main St', 'OWNER1' => 'A', 'OWNER2' => 'B' } },
+        { 'attributes' => { 'SITE_ADDR' => '456 Oak Ave', 'OWNER1' => 'C', 'OWNER2' => 'D' } }
+      ]
+      allow(connection).to receive(:fetch_properties).and_return('features' => features)
 
-      before do
-        allow(connection).to receive(:fetch_properties) do
-          Timecop.travel(10.seconds)
-          raise error
-        end
-      end
+      # First property fails, second succeeds
+      allow(HouseImportService).to receive(:call).with(features[0]).and_raise(StandardError, 'Import failed')
+      house2 = instance_double(House)
+      allow(HouseImportService).to receive(:call).with(features[1]).and_return(house2)
+      allow(UpdateHouseOwnershipService).to receive(:call).with(house: house2, owner1: 'C', owner2: 'D')
 
-      it 'logs the error and re-raises it' do
-        expect { described_class.perform_now }.to raise_error(StandardError, 'API Error')
+      # Should not raise an error, should continue processing
+      expect { described_class.perform_now }.not_to raise_error
+    end
 
-        expect(Rails.logger).to have_received(:error).with('Error in DownloadPropertyDataJob after 10.0 seconds: API Error')
-        expect(Rails.logger).to have_received(:error).with(error.backtrace.join("\n"))
-        expect(Rails.logger).to have_received(:info).with('Download job finished in 10.0 seconds')
-      end
+    it 'handles empty property data gracefully' do
+      connection = instance_double(Connections::PcpaGisConnection)
+      allow(Connections::PcpaGisConnection).to receive(:new).and_return(connection)
+      allow(connection).to receive(:fetch_properties).and_return('features' => [])
+
+      # Should not call any services when no properties to process
+      expect(HouseImportService).not_to receive(:call)
+      expect(UpdateHouseOwnershipService).not_to receive(:call)
+
+      described_class.perform_now
+    end
+
+    it 'handles missing attributes in property data gracefully' do
+      connection = instance_double(Connections::PcpaGisConnection)
+      allow(Connections::PcpaGisConnection).to receive(:new).and_return(connection)
+      features = [
+        { 'attributes' => { 'SITE_ADDR' => '123 Main St' } }, # Missing OWNER1, OWNER2
+        { 'attributes' => { 'OWNER1' => 'A', 'OWNER2' => 'B' } } # Missing SITE_ADDR
+      ]
+      allow(connection).to receive(:fetch_properties).and_return('features' => features)
+
+      # Should handle missing attributes gracefully
+      allow(HouseImportService).to receive(:call).and_raise(StandardError, 'Missing required attributes')
+      allow(UpdateHouseOwnershipService).to receive(:call).and_raise(StandardError, 'Missing required attributes')
+
+      # Should not raise an error, should continue processing
+      expect { described_class.perform_now }.not_to raise_error
     end
   end
 end

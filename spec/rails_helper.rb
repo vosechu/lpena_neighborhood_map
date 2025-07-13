@@ -170,4 +170,13 @@ RSpec.configure do |config|
     ActiveJob::Base.queue_adapter.enqueued_jobs.clear
     ActiveJob::Base.queue_adapter.performed_jobs.clear
   end
+
+  # Helper method to silence logs in specific tests when needed
+  def silence_logs
+    allow(Rails.logger).to receive(:info)
+    allow(Rails.logger).to receive(:debug)
+    allow(Rails.logger).to receive(:warn)
+    # Keep error logs visible unless explicitly silenced
+    allow(Rails.logger).to receive(:error).and_call_original
+  end
 end

@@ -35,6 +35,12 @@ module LpenaNeighborhoodMap
     config.semantic_logger.environment = Rails.env
     config.log_level = ENV.fetch('RAILS_LOG_LEVEL', 'info')
 
+    # Enable verbose query logs with call stack in development
+    if Rails.env.development?
+      config.active_record.verbose_query_logs = true
+      config.active_record.logger = SemanticLogger['ActiveRecord']
+    end
+
     # Use JSON logging in production
     if Rails.env.production?
       config.rails_semantic_logger.add_file_appender = false
