@@ -10,6 +10,7 @@ FactoryBot.define do
     skills { "Programming, Testing" }
     comments { "Test comment" }
     email_notifications_opted_out { false }
+    moved_out_at { nil }
 
     trait :minimal do
       # For when we want to set most attributes manually

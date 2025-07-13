@@ -14,7 +14,7 @@ RSpec.describe Api::ResidentsController, type: :request do
     let(:serialized_resident) { { id: 1, display_name: 'Test Resident' } }
 
     before do
-      allow(Resident).to receive(:all).and_return(double(includes: residents))
+      allow(Resident).to receive(:current).and_return(double(includes: residents))
       allow(ResidentSerializer).to receive(:new).with(resident).and_return(double(as_json: serialized_resident))
     end
 
@@ -206,7 +206,7 @@ RSpec.describe Api::ResidentsController, type: :request do
     let(:owner) { create(:user) }
     let(:neighbor) { create(:user) }
     let(:house)  { create(:house) }
-    let!(:hidden_resident) do
+    let!(:partially_hidden_resident) do
       create(:resident, house: house, user: owner, phone: '555-1234', hide_phone: true, email: 'hidden@example.com', hide_email: true)
     end
 

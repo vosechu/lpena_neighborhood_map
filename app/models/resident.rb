@@ -28,11 +28,11 @@ class Resident < ApplicationRecord
   # attribute :hide_display_name, :boolean
 
   # Scopes
-  scope :current, -> { where(moved_out_at: nil).where('hidden IS NOT TRUE') }
-  # Only residents that are not hidden
+  scope :current, -> { visible.not_moved_out }
   scope :visible, -> { where('hidden IS NOT TRUE') }
   scope :not_moved_out, -> { where(moved_out_at: nil) }
 
+  # These are the attributes used by Avo to search for residents
   def self.ransackable_attributes(auth_object = nil)
     [ 'display_name', 'email', 'id', 'official_name', 'phone', 'birthdate', 'homepage', 'skills', 'comments' ]
   end
@@ -41,6 +41,7 @@ class Resident < ApplicationRecord
     [ 'house', 'user' ]
   end
 
+  # This is used in Avo to display the resident in the list view
   def to_s
     display_name.presence || official_name
   end

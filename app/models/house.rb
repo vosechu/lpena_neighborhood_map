@@ -1,5 +1,5 @@
 class House < ApplicationRecord
-  has_many :residents
+  has_many :residents, -> { current }
   has_many :users, through: :residents
 
   validates :pcpa_uid, presence: true, uniqueness: true
@@ -12,6 +12,7 @@ class House < ApplicationRecord
   validates :longitude, presence: true
   validates :boundary_geometry, presence: true
 
+  # These are the attributes used by Avo to search for houses
   def self.ransackable_attributes(auth_object = nil)
     [ 'city', 'id', 'street_name', 'street_number', 'zip' ]
   end
@@ -20,6 +21,7 @@ class House < ApplicationRecord
     [ 'residents', 'users' ]
   end
 
+  # This is used in Avo to display the house in the list view
   def to_s
     "#{street_number} #{street_name}"
   end
@@ -27,8 +29,8 @@ class House < ApplicationRecord
   # Event detection methods
   def events
     events = []
-    events.concat(birthday_events) if has_upcoming_birthdays?
-    events.concat(new_resident_events) if has_new_residents?
+    events.concat(birthday_events) if birthday_events.present?
+    events.concat(new_resident_events) if new_resident_events.present?
     events
   end
 
@@ -39,20 +41,10 @@ class House < ApplicationRecord
     events.first[:type]
   end
 
-  def has_upcoming_birthdays?
-    visible_residents = residents.respond_to?(:visible) ? residents.visible : residents.select { |r| !r.hidden? }
-    visible_residents.any? { |resident| resident.birthday_upcoming? }
-  end
-
-  def has_new_residents?
-    residents.any? { |resident| resident.first_seen_at && resident.first_seen_at >= 30.days.ago }
-  end
-
   private
 
   def birthday_events
-    current_residents = residents.respond_to?(:current) ? residents.current : residents.select { |r| r.moved_out_at.nil? && !r.hidden? }
-    upcoming_residents = current_residents.select { |resident| resident.birthday_upcoming? }
+    upcoming_residents = residents.select { |resident| resident.birthday_upcoming? }
     return [] if upcoming_residents.empty?
 
     [ {
@@ -62,9 +54,15 @@ class House < ApplicationRecord
     } ]
   end
 
+  def birthday_message(upcoming_residents)
+    upcoming_residents.map do |resident|
+      "#{resident.display_name} has an upcoming birthday on #{resident.formatted_birthdate}!"
+    end.join('<br />')
+  end
+
   def new_resident_events
     new_residents = residents.select do |resident|
-      resident.first_seen_at && resident.first_seen_at >= 30.days.ago
+      resident.first_seen_at && 30.days.ago <= resident.first_seen_at
     end
     return [] if new_residents.empty?
 
@@ -75,23 +73,7 @@ class House < ApplicationRecord
     } ]
   end
 
-  def birthday_message(upcoming_residents)
-    if upcoming_residents.count == 1
-      resident = upcoming_residents.first
-      name = resident.display_name.presence || resident.official_name
-      "#{name} has an upcoming birthday!"
-    else
-      "#{upcoming_residents.count} residents have upcoming birthdays!"
-    end
-  end
-
   def new_residents_message(new_residents)
-    if new_residents.count == 1
-      resident = new_residents.first
-      name = resident.display_name.presence || resident.official_name
-      "#{name} recently moved in!"
-    else
-      "#{new_residents.count} new residents recently moved in!"
-    end
+    new_residents.map(&:display_name).join(' and ') + ' recently moved in!'
   end
 end
