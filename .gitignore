@@ -71,3 +71,5 @@ tasks.json
 !lib/tasks/**
 
 *.csv
+lib/reference_data/raw_pcpa_gis_data.json
+lib/reference_data/sanitized_pcpa_gis_data.json
