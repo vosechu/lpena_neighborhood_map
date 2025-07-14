@@ -1,33 +1,5 @@
 # frozen_string_literal: true
 
-module HouseCleanupHelper
-  def self.deduplicate_residents_on_house(house)
-    # Find duplicate residents by official_name
-    duplicates = Resident.where(house_id: house.id)
-                      .group(:official_name)
-                      .having('COUNT(*) > 1')
-                      .count
-
-    duplicates.each do |official_name, count|
-      residents = Resident.where(house_id: house.id)
-                       .where(official_name: official_name)
-                       .order(:created_at)
-
-      # Keep the oldest resident, mark others as moved out
-      oldest_resident = residents.first
-      duplicates_to_remove = residents.where.not(id: oldest_resident.id)
-
-      puts "    Deduplicating residents with name '#{official_name}':"
-      puts "      Keeping: ID #{oldest_resident.id} (created: #{oldest_resident.created_at})"
-
-      duplicates_to_remove.each do |resident|
-        resident.update!(moved_out_at: Time.current)
-        puts "      Marked as moved out: ID #{resident.id} (created: #{resident.created_at})"
-      end
-    end
-  end
-end
-
 namespace :houses do
   desc 'Clean up duplicate houses by address'
   task cleanup_duplicates: :environment do
@@ -36,19 +8,23 @@ namespace :houses do
     Rails.application.config.active_record.verbose_query_logs = false
     ActiveRecord::Base.logger.level = Logger::ERROR if ActiveRecord::Base.logger.present?
 
-    puts '=== House Duplicate Cleanup ==='
+    puts '=== Restore from Backup Date (2025-06-17 03:59:00 UTC) ==='
 
-    # Find duplicates by address
+    cutoff_time = Time.parse('2025-06-17 03:59:00 UTC')
+    puts "Cutoff time: #{cutoff_time}"
+
+    # Define a reactivation window around the cutoff time (few hours before and after)
+    reactivation_window = 3.hours
+    reactivation_start = cutoff_time - reactivation_window
+    reactivation_end = cutoff_time + reactivation_window
+    puts "Reactivation window: #{reactivation_start} to #{reactivation_end}"
+
+    # Step 1: Find all houses with duplicates
     duplicates = House.group(:street_number, :street_name, :city)
                      .having('COUNT(*) > 1')
                      .count
 
-    if duplicates.empty?
-      puts 'No duplicate houses found by address.'
-      next
-    end
-
-    puts "Found #{duplicates.size} groups of duplicate houses:"
+    puts "Found #{duplicates.size} groups of duplicate houses"
     total_removed = 0
 
     duplicates.each do |(street_number, street_name, city), count|
@@ -72,19 +48,74 @@ namespace :houses do
           # Check that a resident with the same official_name doesn't already exist
           existing_resident = Resident.find_by(house_id: oldest_house.id, official_name: new_resident.official_name)
           if existing_resident.present?
-            # Unless this resident has some additional details that are different
-            if (new_resident.birthdate.present? && new_resident.birthdate.strip != existing_resident.birthdate&.strip) ||
-              (new_resident.email.present? && new_resident.email.strip != existing_resident.email&.strip) ||
-              (new_resident.phone.present? && new_resident.phone.strip != existing_resident.phone&.strip) ||
-              (new_resident.homepage.present? && new_resident.homepage.strip != existing_resident.homepage&.strip) ||
-              (new_resident.skills.present? && new_resident.skills.strip != existing_resident.skills&.strip) ||
-              (new_resident.comments.present? && new_resident.comments.strip != existing_resident.comments&.strip)
+            # Use RSpec's Differ to check if there are meaningful differences
+            require 'rspec/support/differ'
+            differ = RSpec::Support::Differ.new
 
-              puts "    Resident #{new_resident.id} (#{new_resident.official_name}) already exists on house #{oldest_house.id} with different details:"
-              puts "      new: #{ResidentSerializer.new(new_resident).as_json}"
-              puts "      existing: #{ResidentSerializer.new(existing_resident).as_json}"
+            # Only compare meaningful fields, not all serializer fields
+            existing_data = {
+              user_id: existing_resident.user_id,
+              email: existing_resident.email,
+              phone: existing_resident.phone,
+              birthdate: existing_resident.birthdate,
+              homepage: existing_resident.homepage,
+              skills: existing_resident.skills,
+              comments: existing_resident.comments,
+              hide_email: existing_resident.hide_email,
+              hide_phone: existing_resident.hide_phone,
+              hide_birthdate: existing_resident.hide_birthdate,
+              hide_display_name: existing_resident.hide_display_name
+            }
 
-              new_resident.update!(house: oldest_house)
+            new_data = {
+              user_id: new_resident.user_id,
+              email: new_resident.email,
+              phone: new_resident.phone,
+              birthdate: new_resident.birthdate,
+              homepage: new_resident.homepage,
+              skills: new_resident.skills,
+              comments: new_resident.comments,
+              hide_email: new_resident.hide_email,
+              hide_phone: new_resident.hide_phone,
+              hide_birthdate: new_resident.hide_birthdate,
+              hide_display_name: new_resident.hide_display_name
+            }
+
+            # Check if new resident has additional data that existing doesn't have
+            has_additional_data = false
+            additional_fields = []
+
+            new_data.each do |field, new_value|
+              existing_value = existing_data[field]
+              if existing_value.blank? && new_value.present?
+                has_additional_data = true
+                additional_fields << field
+              end
+            end
+
+            if has_additional_data
+              puts "    Resident #{new_resident.id} (#{new_resident.official_name}) already exists on house #{oldest_house.id} with additional data:"
+              puts "      Additional fields: #{additional_fields.join(', ')}"
+
+              # Also show the full diff for context
+              existing_json = JSON.pretty_generate(existing_data)
+              new_json = JSON.pretty_generate(new_data)
+              diff = differ.diff_as_string(existing_json, new_json)
+              puts "      Full diff:"
+              puts diff.lines.map { |line| "        #{line.chomp}" }.join("\n")
+
+              # Track for manual review instead of auto-resolving
+              @manual_review_cases ||= []
+              @manual_review_cases << {
+                house: oldest_house,
+                existing_resident: existing_resident,
+                new_resident: new_resident,
+                additional_fields: additional_fields,
+                diff: diff
+              }
+
+              # Keep both for now - mark new one as moved out
+              new_resident.update!(house: oldest_house, moved_out_at: Time.current)
             else
               print 'd'
               new_resident.destroy!
@@ -96,42 +127,134 @@ namespace :houses do
         end
       end
 
-      # Deduplicate residents on the oldest house after moving them
-      HouseCleanupHelper.deduplicate_residents_on_house(oldest_house)
-
-      # Check that there's at least some residents on the oldest house and if not,
-      # clear moved_out_at for the newest residents that have a similar creation date
-      if oldest_house.residents.count == 0
-        # Find residents that were moved to this house (they have moved_out_at set)
-        # and clear their moved_out_at to make them active again
-        # Only reactivate residents with similar moved_out_at dates (within 1 minute of each other)
-        moved_out_residents = oldest_house.residents.where.not(moved_out_at: nil).order(moved_out_at: :desc)
-
-        if moved_out_residents.any?
-          # Get the most recent moved_out_at time as reference (newest residents first)
-          reference_time = moved_out_residents.first.moved_out_at
-
-          # Find all residents moved out within 1 minute of the reference time
-          similar_residents = moved_out_residents.where(
-            'moved_out_at BETWEEN ? AND ?',
-            reference_time - 1.minute,
-            reference_time + 1.minute
-          )
-
-          similar_residents.each do |resident|
-            resident.update!(moved_out_at: nil)
-          end
-        end
-      end
-
       # Delete the duplicate houses (now that all residents are moved)
       duplicates_to_remove.destroy_all
       total_removed += duplicates_to_remove.count
     end
 
+    puts "\n=== Step 2: Restore residents to state before cutoff time ==="
+
+    # For each house, restore residents to their state before the cutoff time
+    House.includes(:residents).find_each do |house|
+      puts "\nProcessing house: #{house.street_number} #{house.street_name}, #{house.city}"
+
+      # Get all residents for this house
+      all_residents = Resident.where(house_id: house.id)
+
+      # Group residents by official_name to handle duplicates
+      residents_by_name = all_residents.group_by(&:official_name)
+
+      residents_by_name.each do |official_name, residents|
+        if residents.count == 1
+          # Single resident - only restore if they were moved out within the reactivation window
+          resident = residents.first
+          if resident.moved_out_at &&
+             resident.moved_out_at >= reactivation_start &&
+             resident.moved_out_at <= reactivation_end
+            puts "  Restoring single resident: #{resident.official_name} (moved_out_at: #{resident.moved_out_at})"
+            resident.update!(moved_out_at: nil)
+          end
+        else
+          # Multiple residents with same name - keep the oldest one that was active before cutoff
+          # or the one with the most recent activity after cutoff
+          residents_sorted = residents.sort_by(&:created_at)
+
+          # Also find residents moved out within the reactivation window
+          residents_in_window = residents_sorted.select do |r|
+            r.moved_out_at &&
+            r.moved_out_at >= reactivation_start &&
+            r.moved_out_at <= reactivation_end
+          end
+
+          # Mark others as moved out, but only if they were moved out within the reactivation window
+          residents_sorted.each do |resident|
+            if resident.moved_out_at &&
+                resident.moved_out_at >= reactivation_start &&
+                resident.moved_out_at <= reactivation_end
+              puts "    Marking as moved out: #{resident.official_name} (moved_out_at: #{resident.moved_out_at})"
+              resident.update!(moved_out_at: Time.current)
+            end
+          end
+
+          if residents_in_window.any?
+            # No residents active before cutoff, but some were moved out within the window
+            puts "  Reactivating ALL residents in reactivation window for: #{official_name}"
+            residents_in_window.each do |resident|
+              puts "    Reactivating: #{resident.official_name} (moved_out_at: #{resident.moved_out_at})"
+              resident.update!(moved_out_at: nil)
+            end
+          else
+            puts "  No residents found in reactivation window for: #{official_name}"
+          end
+        end
+      end
+    end
+
     puts "\n=== Summary ==="
     puts "Total duplicate houses removed: #{total_removed}"
     puts "Remaining houses: #{House.count}"
+    puts "Total active residents: #{Resident.where(moved_out_at: nil).count}"
+
+    # Check that each house has at least some active residents
+    puts "\n=== Checking for houses with no active residents ==="
+    houses_without_residents = []
+
+    House.includes(:residents).find_each do |house|
+      active_residents = house.residents.count
+      if active_residents == 0
+        houses_without_residents << house
+        puts "  WARNING: #{house.street_number} #{house.street_name}, #{house.city} (ID: #{house.id}) has no active residents"
+      end
+    end
+
+    if houses_without_residents.empty?
+      puts "  All houses have at least one active resident ✓"
+    else
+      puts "  Found #{houses_without_residents.count} houses with no active residents"
+    end
+
+    # Check for houses with more than 2 current residents (potential duplicates)
+    puts "\n=== Checking for houses with more than 2 current residents ==="
+    houses_with_many_residents = []
+
+    House.includes(:residents).find_each do |house|
+      active_residents = house.residents.count
+      if active_residents > 2
+        houses_with_many_residents << house
+        puts "  WARNING: #{house.street_number} #{house.street_name}, #{house.city} (ID: #{house.id}) has #{active_residents} active residents"
+        house.residents.each do |resident|
+          puts "    - #{resident.official_name}"
+        end
+      end
+    end
+
+    if houses_with_many_residents.empty?
+      puts "  No houses found with more than 2 active residents ✓"
+    else
+      puts "  Found #{houses_with_many_residents.count} houses with more than 2 active residents"
+    end
+
+    # Report manual review cases
+    if @manual_review_cases&.any?
+      puts "\n=== Manual Review Required ==="
+      puts "Found #{@manual_review_cases.count} cases where duplicate residents have different data:"
+
+      @manual_review_cases.each_with_index do |case_data, index|
+        house = case_data[:house]
+        existing = case_data[:existing_resident]
+        new_resident = case_data[:new_resident]
+        diff = case_data[:diff]
+
+        puts "\n  #{index + 1}. #{house.street_number} #{house.street_name}, #{house.city}"
+        puts "     Existing: #{existing.official_name} (ID: #{existing.id})"
+        puts "     New: #{new_resident.official_name} (ID: #{new_resident.id})"
+        puts "     Diff:"
+        puts diff.lines.map { |line| "       #{line.chomp}" }.join("\n")
+      end
+    else
+      puts "\n=== Manual Review Required ==="
+      puts "No manual review cases found ✓"
+    end
   end
 
   desc 'Show duplicate houses by address'
@@ -159,61 +282,5 @@ namespace :houses do
         puts "  ID: #{house.id}, PCPA_UID: #{house.pcpa_uid}, Residents: #{resident_count}, Created: #{house.created_at}"
       end
     end
-  end
-
-  desc 'Reactivate residents on houses with no active residents'
-  task reactivate_residents: :environment do
-    # Turn off AR::B logging
-    Rails.logger.level = Logger::ERROR
-    ActiveRecord::Base.logger.level = Logger::ERROR if ActiveRecord::Base.logger.present?
-
-    puts '=== Reactivate Residents on Empty Houses ==='
-
-    # Find houses with no active residents
-    houses_without_residents = House.includes(:residents).select do |house|
-      house.residents.count == 0
-    end
-
-    if houses_without_residents.empty?
-      puts 'No houses found without active residents.'
-      next
-    end
-
-    puts "Found #{houses_without_residents.size} houses without active residents:"
-    total_reactivated = 0
-
-    houses_without_residents.each do |house|
-      puts "\nAddress: #{house.street_number} #{house.street_name}, #{house.city}"
-      puts "  House ID: #{house.id} (PCPA_UID: #{house.pcpa_uid})"
-
-      # Gather all moved-out residents BEFORE any updates
-      moved_out_residents = Resident.where(house_id: house.id).where.not(moved_out_at: nil).order(moved_out_at: :desc)
-
-      if moved_out_residents.any?
-        reference_time = moved_out_residents.first.moved_out_at
-        similar_residents = moved_out_residents.where(
-          'moved_out_at BETWEEN ? AND ?',
-          reference_time - 1.minute,
-          reference_time + 1.minute
-        )
-
-        puts "  Reactivating #{similar_residents.count} residents with similar moved_out_at dates:"
-        # Reactivate ALL similar residents in one pass
-        similar_residents.each do |resident|
-          begin
-            resident.update!(moved_out_at: nil)
-            puts "    - #{resident.official_name} (moved_out_at was: #{resident.moved_out_at_was})"
-            total_reactivated += 1
-          rescue => e
-            puts "    ERROR updating #{resident.official_name}: #{e.class} - #{e.message}"
-          end
-        end
-      else
-        puts "  No residents with moved_out_at found for this house."
-      end
-    end
-
-    puts "\n=== Summary ==="
-    puts "Total residents reactivated: #{total_reactivated}"
   end
 end
