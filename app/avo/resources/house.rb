@@ -33,7 +33,7 @@ class Avo::Resources::House < Avo::BaseResource
     field :state, as: :text, sortable: true
     field :zip, as: :text, sortable: true
     field :pcpa_uid, as: :text, sortable: true, help: 'Property Control Parcel Area UID'
-    field :residents, as: :has_many, searchable: true
+    field :residents, as: :has_many, searchable: true, scope: -> { Resident.where(house_id: parent.id) }
     field :users, as: :has_many, through: :residents
   end
 end
