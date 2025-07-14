@@ -48,6 +48,7 @@ gem 'stimulus-rails'
 gem 'bootsnap', require: false
 
 # Structured logging for Rails applications
+gem 'amazing_print' # colorized output of semantic data (Hash output)
 gem 'rails_semantic_logger'
 
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]

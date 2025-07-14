@@ -2,6 +2,7 @@ require 'active_support/core_ext/integer/time'
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
+  config.log_level = :debug
 
   # Make code changes take effect immediately without server restart.
   config.enable_reloading = true
@@ -67,9 +68,13 @@ Rails.application.configure do
   config.action_view.annotate_rendered_view_with_filenames = true
 
   # Configure semantic logging for development
-  config.rails_semantic_logger.add_file_appender = true
+  config.active_record.logger = SemanticLogger['ActiveRecord']
   config.semantic_logger.add_appender(io: STDOUT, formatter: :color)
-  config.log_level = :debug
+  config.rails_semantic_logger.add_file_appender = true
+  config.rails_semantic_logger.semantic   = false
+  config.rails_semantic_logger.started    = true
+  config.rails_semantic_logger.processing = true
+  config.rails_semantic_logger.rendered   = true
 
   # Uncomment if you wish to allow Action Cable access from any origin.
   # config.action_cable.disable_request_forgery_protection = true
