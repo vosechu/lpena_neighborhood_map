@@ -38,20 +38,12 @@ namespace :houses do
       oldest_house = houses.first
       duplicates_to_remove = houses.where.not(id: oldest_house.id)
 
-      puts "\nAddress: #{street_number} #{street_name}, #{city}"
-      puts "  Keeping: ID #{oldest_house.id} (PCPA_UID: #{oldest_house.pcpa_uid}, created: #{oldest_house.created_at})"
-      puts "  Removing: #{duplicates_to_remove.count} duplicates"
-
       # Move residents from duplicate houses to the oldest house
       duplicates_to_remove.each do |house|
         Resident.where(house_id: house.id).each do |new_resident|
           # Check that a resident with the same official_name doesn't already exist
           existing_resident = Resident.find_by(house_id: oldest_house.id, official_name: new_resident.official_name)
           if existing_resident.present?
-            # Use RSpec's Differ to check if there are meaningful differences
-            require 'rspec/support/differ'
-            differ = RSpec::Support::Differ.new
-
             # Only compare meaningful fields, not all serializer fields
             existing_data = {
               user_id: existing_resident.user_id,
@@ -94,15 +86,14 @@ namespace :houses do
             end
 
             if has_additional_data
+              puts '--------------------------------'
               puts "    Resident #{new_resident.id} (#{new_resident.official_name}) already exists on house #{oldest_house.id} with additional data:"
               puts "      Additional fields: #{additional_fields.join(', ')}"
 
               # Also show the full diff for context
-              existing_json = JSON.pretty_generate(existing_data)
-              new_json = JSON.pretty_generate(new_data)
-              diff = differ.diff_as_string(existing_json, new_json)
-              puts "      Full diff:"
-              puts diff.lines.map { |line| "        #{line.chomp}" }.join("\n")
+              puts "      Existing data: #{existing_data.inspect}"
+              puts "      New data: #{new_data.inspect}"
+              puts '--------------------------------'
 
               # Track for manual review instead of auto-resolving
               @manual_review_cases ||= []
@@ -110,8 +101,7 @@ namespace :houses do
                 house: oldest_house,
                 existing_resident: existing_resident,
                 new_resident: new_resident,
-                additional_fields: additional_fields,
-                diff: diff
+                additional_fields: additional_fields
               }
 
               # Keep both for now - mark new one as moved out
@@ -136,8 +126,6 @@ namespace :houses do
 
     # For each house, restore residents to their state before the cutoff time
     House.includes(:residents).find_each do |house|
-      puts "\nProcessing house: #{house.street_number} #{house.street_name}, #{house.city}"
-
       # Get all residents for this house
       all_residents = Resident.where(house_id: house.id)
 
@@ -243,13 +231,12 @@ namespace :houses do
         house = case_data[:house]
         existing = case_data[:existing_resident]
         new_resident = case_data[:new_resident]
-        diff = case_data[:diff]
+        additional_fields = case_data[:additional_fields]
 
         puts "\n  #{index + 1}. #{house.street_number} #{house.street_name}, #{house.city}"
         puts "     Existing: #{existing.official_name} (ID: #{existing.id})"
         puts "     New: #{new_resident.official_name} (ID: #{new_resident.id})"
-        puts "     Diff:"
-        puts diff.lines.map { |line| "       #{line.chomp}" }.join("\n")
+        puts "     Additional fields: #{additional_fields.join(', ')}"
       end
     else
       puts "\n=== Manual Review Required ==="
