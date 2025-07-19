@@ -18,7 +18,9 @@ RSpec.describe DownloadPropertyDataJob do
         { 'attributes' => { 'SITE_ADDR' => '456 Oak Ave' } }
       ]
       allow(connection).to receive(:fetch_properties).and_return('features' => features)
-      allow(UpdateHouseOwnershipService).to receive(:call).and_return({ residents_added: [], residents_removed: [] })
+      service_instance = instance_double(UpdateHouseOwnershipService)
+      allow(UpdateHouseOwnershipService).to receive(:new).and_return(service_instance)
+      allow(service_instance).to receive(:call).and_return({ residents_added: [], residents_removed: [] })
       expect(HouseImportService).to receive(:call).with(features[0]).ordered
       expect(HouseImportService).to receive(:call).with(features[1]).ordered
 
@@ -40,16 +42,12 @@ RSpec.describe DownloadPropertyDataJob do
 
       # Verify that UpdateHouseOwnershipService is called with the correct arguments
       # extracted from the attributes
-      expect(UpdateHouseOwnershipService).to receive(:call).with(
-        house: house1,
-        owner1: 'A',
-        owner2: 'B'
-      ).ordered
-      expect(UpdateHouseOwnershipService).to receive(:call).with(
-        house: house2,
-        owner1: 'C',
-        owner2: 'D'
-      ).ordered
+      service_instance1 = instance_double(UpdateHouseOwnershipService)
+      service_instance2 = instance_double(UpdateHouseOwnershipService)
+      allow(UpdateHouseOwnershipService).to receive(:new).with(house: house1, owner1_name: 'A', owner2_name: 'B').and_return(service_instance1)
+      allow(UpdateHouseOwnershipService).to receive(:new).with(house: house2, owner1_name: 'C', owner2_name: 'D').and_return(service_instance2)
+      expect(service_instance1).to receive(:call).ordered
+      expect(service_instance2).to receive(:call).ordered
 
       described_class.perform_now
     end
@@ -75,7 +73,9 @@ RSpec.describe DownloadPropertyDataJob do
       allow(HouseImportService).to receive(:call).with(features[0]).and_raise(StandardError, 'Import failed')
       house2 = instance_double(House)
       allow(HouseImportService).to receive(:call).with(features[1]).and_return(house2)
-      allow(UpdateHouseOwnershipService).to receive(:call).with(house: house2, owner1: 'C', owner2: 'D')
+      service_instance = instance_double(UpdateHouseOwnershipService)
+      allow(UpdateHouseOwnershipService).to receive(:new).with(house: house2, owner1_name: 'C', owner2_name: 'D').and_return(service_instance)
+      allow(service_instance).to receive(:call)
 
       # Should not raise an error, should continue processing
       expect { described_class.perform_now }.not_to raise_error
@@ -88,7 +88,7 @@ RSpec.describe DownloadPropertyDataJob do
 
       # Should not call any services when no properties to process
       expect(HouseImportService).not_to receive(:call)
-      expect(UpdateHouseOwnershipService).not_to receive(:call)
+      expect(UpdateHouseOwnershipService).not_to receive(:new)
 
       described_class.perform_now
     end
@@ -104,7 +104,9 @@ RSpec.describe DownloadPropertyDataJob do
 
       # Should handle missing attributes gracefully
       allow(HouseImportService).to receive(:call).and_raise(StandardError, 'Missing required attributes')
-      allow(UpdateHouseOwnershipService).to receive(:call).and_raise(StandardError, 'Missing required attributes')
+      service_instance = instance_double(UpdateHouseOwnershipService)
+      allow(UpdateHouseOwnershipService).to receive(:new).and_return(service_instance)
+      allow(service_instance).to receive(:call).and_raise(StandardError, 'Missing required attributes')
 
       # Should not raise an error, should continue processing
       expect { described_class.perform_now }.not_to raise_error

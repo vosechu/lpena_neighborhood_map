@@ -67,13 +67,13 @@ RSpec.describe House do
 
   describe '#ransackable_attributes' do
     it 'returns the expected attributes' do
-      expect(described_class.ransackable_attributes).to eq(['city', 'id', 'street_name', 'street_number', 'zip'])
+      expect(described_class.ransackable_attributes).to eq([ 'city', 'id', 'street_name', 'street_number', 'zip' ])
     end
   end
 
   describe '#ransackable_associations' do
     it 'returns the expected associations' do
-      expect(described_class.ransackable_associations).to eq(['residents', 'users'])
+      expect(described_class.ransackable_associations).to eq([ 'residents', 'users' ])
     end
   end
 
@@ -150,7 +150,7 @@ RSpec.describe House do
 
     context 'when there is one event' do
       before do
-        allow(house).to receive(:events).and_return([{ type: 'birthday' }])
+        allow(house).to receive(:events).and_return([ { type: 'birthday' } ])
       end
 
       it 'returns the event type' do
@@ -278,12 +278,12 @@ RSpec.describe House do
     let(:resident2) { instance_double(Resident, to_s: 'Bob', formatted_birthdate: 'January 15') }
 
     it 'formats single resident message' do
-      message = house.send(:birthday_message, [resident1])
+      message = house.send(:birthday_message, [ resident1 ])
       expect(message).to eq('Alice has an upcoming birthday on December 25!')
     end
 
     it 'formats multiple residents message' do
-      message = house.send(:birthday_message, [resident1, resident2])
+      message = house.send(:birthday_message, [ resident1, resident2 ])
       expect(message).to eq('Alice has an upcoming birthday on December 25!<br />Bob has an upcoming birthday on January 15!')
     end
   end
@@ -294,12 +294,12 @@ RSpec.describe House do
     let(:resident2) { instance_double(Resident, to_s: 'Bob') }
 
     it 'formats single resident message' do
-      message = house.send(:new_residents_message, [resident1])
+      message = house.send(:new_residents_message, [ resident1 ])
       expect(message).to eq('Alice recently moved in!')
     end
 
     it 'formats multiple residents message' do
-      message = house.send(:new_residents_message, [resident1, resident2])
+      message = house.send(:new_residents_message, [ resident1, resident2 ])
       expect(message).to eq('Alice and Bob recently moved in!')
     end
   end

@@ -3,6 +3,16 @@ require 'rails_helper'
 RSpec.feature 'Map core flows', type: :feature, js: true do
   include Warden::Test::Helpers
 
+  scenario 'Login page loads correctly' do
+    visit new_user_session_path
+
+    expect(page).to have_title(/Lpena Neighborhood Map/)
+    expect(page).to have_selector('form')
+    expect(page).to have_field('Email')
+    expect(page).to have_field('Password')
+    expect(page).to have_button('Sign In')
+  end
+
   scenario 'Resident owner edits their info, toggles visibility, and adds a new resident—all in one flow' do
     # Setup data
     user   = FactoryBot.create(:user)

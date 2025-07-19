@@ -196,7 +196,7 @@ namespace :houses do
     end
 
     if houses_without_residents.empty?
-      puts "  All houses have at least one active resident ✓"
+      puts '  All houses have at least one active resident ✓'
     else
       puts "  Found #{houses_without_residents.count} houses with no active residents"
     end
@@ -217,7 +217,7 @@ namespace :houses do
     end
 
     if houses_with_many_residents.empty?
-      puts "  No houses found with more than 2 active residents ✓"
+      puts '  No houses found with more than 2 active residents ✓'
     else
       puts "  Found #{houses_with_many_residents.count} houses with more than 2 active residents"
     end
@@ -240,7 +240,7 @@ namespace :houses do
       end
     else
       puts "\n=== Manual Review Required ==="
-      puts "No manual review cases found ✓"
+      puts 'No manual review cases found ✓'
     end
   end
 
