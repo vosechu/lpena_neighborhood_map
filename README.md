@@ -104,7 +104,7 @@ dotenv -f .env.production pg_dump -h trolley.proxy.rlwy.net -U postgres -p 34534
 Restore TO PROD
 ```
 DISABLE_DATABASE_ENVIRONMENT_CHECK=1 dotenv -f .env.production rails db:drop db:create
-dotenv -f .env.production psql -h trolley.proxy.rlwy.net -U postgres -p 34534 -d railway < production_backup.sql
+dotenv -f .env.production psql -h trolley.proxy.rlwy.net -U postgres -p 34534 -d railway < production_backup_full.sql
 ```
 
 Restoring prod backups to local env

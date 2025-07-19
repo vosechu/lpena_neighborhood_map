@@ -56,7 +56,7 @@ class House < ApplicationRecord
 
   def birthday_message(upcoming_residents)
     upcoming_residents.map do |resident|
-      "#{resident.display_name} has an upcoming birthday on #{resident.formatted_birthdate}!"
+      "#{resident} has an upcoming birthday on #{resident.formatted_birthdate}!"
     end.join('<br />')
   end
 
@@ -74,6 +74,6 @@ class House < ApplicationRecord
   end
 
   def new_residents_message(new_residents)
-    new_residents.map(&:display_name).join(' and ') + ' recently moved in!'
+    new_residents.map(&:to_s).join(' and ') + ' recently moved in!'
   end
 end

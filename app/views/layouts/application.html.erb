@@ -35,7 +35,7 @@
   <body>
     <script>
       // Global admin status for templates
-      window.isAdmin = <%= current_user.admin? %>;
+      window.isAdmin = <%= current_user&.admin? || false %>;
     </script>
     <main>
       <%= yield %>
