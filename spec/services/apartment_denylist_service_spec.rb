@@ -46,5 +46,34 @@ RSpec.describe ApartmentDenylistService do
         expect(described_class.should_skip?(house_details)).to be false
       end
     end
+
+    context 'when denylist contains different address' do
+      let(:house_details) do
+        {
+          'attributes' => {
+            'STR_NUM' => '0',
+            'SITE_ADDR' => '5th Ave N'
+          }
+        }
+      end
+
+      it 'returns true for denylisted address' do
+        stub_const("#{described_class}::DENYLISTED_ADDRESSES", [ '0 5th Ave N', '5th Ave N' ])
+
+        expect(described_class.should_skip?(house_details)).to be true
+      end
+    end
+
+    context 'when there is a unit number' do
+      let(:house_details) do
+        {
+          'attributes' => { 'STR_NUM' => '5900', 'SITE_ADDR' => '5900 5th Ave N #D7' }
+        }
+      end
+
+      it 'returns false for units at a denylisted address' do
+        expect(described_class.should_skip?(house_details)).to be false
+      end
+    end
   end
 end

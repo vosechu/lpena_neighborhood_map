@@ -2,7 +2,8 @@ class ApartmentDenylistService
   # AIDEV-NOTE: List of known apartment buildings that should be excluded
   # from the neighborhood map due to multi-family complexity
   DENYLISTED_ADDRESSES = [
-    '5900 5th Ave N'
+    '5900 5th Ave N',
+    '5908 5th Ave N'
   ].freeze
 
   def self.should_skip?(house_details)
@@ -11,7 +12,8 @@ class ApartmentDenylistService
 
     address = "#{attrs['STR_NUM']} #{extract_street_name(attrs)}"
 
-    DENYLISTED_ADDRESSES.any? { |denylisted| address.include?(denylisted) }
+    # Only match exact addresses (no unit numbers)
+    DENYLISTED_ADDRESSES.any? { |denylisted| address.strip == denylisted }
   end
 
   private
