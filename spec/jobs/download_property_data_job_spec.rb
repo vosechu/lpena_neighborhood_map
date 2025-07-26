@@ -52,6 +52,29 @@ RSpec.describe DownloadPropertyDataJob do
       described_class.perform_now
     end
 
+    it 'skips apartment buildings in the denylist' do
+      connection = instance_double(Connections::PcpaGisConnection)
+      allow(Connections::PcpaGisConnection).to receive(:new).and_return(connection)
+      features = [
+        { 'attributes' => { 'STR_NUM' => '5900', 'SITE_ADDR' => '5900 5th Ave N', 'OWNER1' => 'A', 'OWNER2' => 'B' } },
+        { 'attributes' => { 'SITE_ADDR' => '123 Main St', 'OWNER1' => 'C', 'OWNER2' => 'D' } }
+      ]
+      allow(connection).to receive(:fetch_properties).and_return('features' => features)
+
+      # Should not call services for the denylisted apartment building
+      expect(HouseImportService).not_to receive(:call).with(features[0])
+      expect(UpdateHouseOwnershipService).not_to receive(:new).with(house: anything, owner1_name: 'A', owner2_name: 'B')
+
+      # Should still process the regular house
+      house2 = instance_double(House)
+      allow(HouseImportService).to receive(:call).with(features[1]).and_return(house2)
+      service_instance = instance_double(UpdateHouseOwnershipService)
+      allow(UpdateHouseOwnershipService).to receive(:new).with(house: house2, owner1_name: 'C', owner2_name: 'D').and_return(service_instance)
+      allow(service_instance).to receive(:call)
+
+      described_class.perform_now
+    end
+
     it 'bails out if the PCPA GIS connection fails' do
       connection = instance_double(Connections::PcpaGisConnection)
       allow(Connections::PcpaGisConnection).to receive(:new).and_return(connection)

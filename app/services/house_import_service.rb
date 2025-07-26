@@ -24,6 +24,8 @@ class HouseImportService
   end
 
   def house_attributes(house)
+    # AIDEV-NOTE: STR_NUM could be 0, so we need to handle that case
+    # See: @reference_data/example_house.json for an example of a house
     {
       street_number: @attrs['STR_NUM'],
       street_name: extract_street_name,
@@ -41,25 +43,25 @@ class HouseImportService
 
   private
 
+  # Extract street name from SITE_ADDR (format: "6573 1st Ave N")
+  # by removing the STR_NUM from the SITE_ADDR
   def extract_street_name
-    # Extract street name from SITE_ADDR (format: "6573 1st Ave N")
-    # Note: There is a pathological case where the street name is a number, e.g. "1st Ave N"
-    # Remove the STR_NUM from the street name
     street_number = @attrs['STR_NUM'].to_s
     @attrs['SITE_ADDR'].sub(/^#{street_number}\s+/, '')
   end
 
+  # Extract from SITE_CITY first (format: "St Petersburg,")
+  # falling back to extracting from SITE_CITYZIP (format: "St Petersburg, FL 33710")
   def extract_city
-    # Try SITE_CITY first, falling back to extracting from SITE_CITYZIP
     city = @attrs['SITE_CITY']&.delete(',')
     return city if city.present?
 
-    # Extract from SITE_CITYZIP (format: "St Petersburg, FL 33710")
+    # fallback to SITE_CITYZIP
     @attrs['SITE_CITYZIP']&.split(',')&.first&.strip
   end
 
+  # Extract zip from SITE_CITYZIP (format: "St Petersburg, FL 33710")
   def extract_zip
-    # Extract zip from SITE_CITYZIP (format: "St Petersburg, FL 33710")
     @attrs['SITE_CITYZIP']&.split(' ')&.last
   end
 end

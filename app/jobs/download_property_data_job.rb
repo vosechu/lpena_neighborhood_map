@@ -4,7 +4,7 @@ class DownloadPropertyDataJob < ApplicationJob
   def perform
     Rails.logger.info 'Starting property data download job'
     start_time = Time.current
-    stats = { created: 0, updated: 0, unchanged: 0, errors: 0 }
+    stats = { created: 0, updated: 0, unchanged: 0, errors: 0, skipped: 0 }
 
     begin
       Rails.logger.info 'Fetching properties from PCPA GIS service...'
@@ -18,6 +18,13 @@ class DownloadPropertyDataJob < ApplicationJob
 
     data['features'].each do |house_details|
       attrs = house_details['attributes']
+
+      # Skip apartment buildings in the denylist
+      if ApartmentDenylistService.should_skip?(house_details)
+        stats[:skipped] += 1
+        Rails.logger.info "Skipping apartment building: #{attrs['SITE_ADDR']}"
+        next
+      end
 
       begin
         # Import house and get reference
@@ -35,5 +42,7 @@ class DownloadPropertyDataJob < ApplicationJob
         Rails.logger.error e.backtrace.join("\n")
       end
     end
+
+    Rails.logger.info "Job completed. Stats: #{stats}"
   end
 end
