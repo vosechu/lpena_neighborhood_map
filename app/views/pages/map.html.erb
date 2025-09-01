@@ -34,13 +34,26 @@
              data-action="input->map#applySearch"
              class="w-64 border-gray-300 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
       <div class="mt-2">
-        <label class="text-sm font-medium inline-flex items-center gap-2">
+        <label class="text-sm font-medium inline-flex items-center gap-2 cursor-pointer">
           <input type="checkbox"
                  data-map-target="newResidentsToggle"
-                 data-action="change->map#updateHighlight"
+                 data-action="change->map#updateHighlight change->map#toggleNewResidentsList"
                  class="rounded" />
-          New residents (30 days)
+          <span class="flex items-center gap-1">
+            New residents (30 days)
+            <svg data-map-target="newResidentsChevron" 
+                 class="w-4 h-4 text-gray-500 transition-transform duration-200" 
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"></path>
+            </svg>
+          </span>
         </label>
+        
+        <!-- Expandable New Residents List -->
+        <div data-map-target="newResidentsList" 
+             class="hidden mt-3 pl-6 space-y-3 text-sm border-l-2 border-gray-200 bg-gray-50/50 rounded-r p-3 max-h-64 overflow-y-auto">
+          <!-- Content will be populated by JavaScript -->
+        </div>
       </div>
     </div>
   </div>

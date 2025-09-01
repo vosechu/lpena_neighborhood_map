@@ -110,5 +110,34 @@ RSpec.feature 'Map core flows', type: :feature, js: true do
     newest = house.residents.order(:created_at).last
     expect(newest.display_name).to eq('Newest Resident')
     expect(newest.email).to eq('newresident@example.com')
+
+    # --- Test New Residents Checkbox Feature ---
+    # First update the newest resident to have a recent first_seen_at to make it show up in new residents
+    newest.update!(first_seen_at: 10.days.ago)
+
+    # Find and check the new residents checkbox
+    checkbox = find('input[data-map-target="newResidentsToggle"]')
+    expect(checkbox).not_to be_checked
+    
+    # Initially, the list should be hidden
+    expect(page).to have_selector('[data-map-target="newResidentsList"].hidden', visible: false)
+    
+    # Click the checkbox to expand the list using JavaScript (avoid element interception)
+    page.execute_script("document.querySelector('input[data-map-target=\"newResidentsToggle\"]').click()")
+    
+    # Wait for list to appear and be populated
+    expect(page).not_to have_selector('[data-map-target="newResidentsList"].hidden', wait: 5)
+    
+    # Check that the list contains the new resident
+    within('[data-map-target="newResidentsList"]') do
+      expect(page).to have_content(house.street_number.to_s + ' ' + house.street_name)
+      expect(page).to have_content('Newest Resident')
+    end
+    
+    # Uncheck the checkbox to hide the list using JavaScript
+    page.execute_script("document.querySelector('input[data-map-target=\"newResidentsToggle\"]').click()")
+    
+    # List should be hidden again
+    expect(page).to have_selector('[data-map-target="newResidentsList"].hidden', visible: false)
   end
 end

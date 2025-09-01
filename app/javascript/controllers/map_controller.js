@@ -10,6 +10,8 @@ export default class extends Controller {
     "canvas",
     "searchInput",
     "newResidentsToggle",
+    "newResidentsChevron",
+    "newResidentsList",
     "modal",
     "searchToggle",
     "searchBox"
@@ -102,7 +104,13 @@ export default class extends Controller {
     try {
       const response = await fetch("/api/houses");
       const houses = await response.json();
+      this.houses = houses;  // Store houses data for other methods
       this.mapRenderer.loadHouses(houses);
+      
+      // If new residents checkbox is already checked, update the list now that we have data
+      if (this.hasNewResidentsToggleTarget && this.newResidentsToggleTarget.checked) {
+        this.populateNewResidentsList();
+      }
     } catch (error) {
       console.error('Error loading houses:', error);
       this.showErrorMessage('Failed to load map data. Please refresh the page.');
@@ -328,6 +336,73 @@ export default class extends Controller {
 
   applySearch() {
     this.updateHighlight();
+  }
+
+  // Toggle new residents list visibility
+  toggleNewResidentsList() {
+    if (this.newResidentsToggleTarget.checked) {
+      this.showNewResidentsList();
+    } else {
+      this.hideNewResidentsList();
+    }
+  }
+
+  // Show the new residents list
+  showNewResidentsList() {
+    this.populateNewResidentsList();
+    this.newResidentsListTarget.classList.remove('hidden');
+    this.newResidentsChevronTarget.classList.add('rotate-180');
+  }
+
+  // Hide the new residents list
+  hideNewResidentsList() {
+    this.newResidentsListTarget.classList.add('hidden');
+    this.newResidentsChevronTarget.classList.remove('rotate-180');
+  }
+
+  // Populate the new residents list with current data
+  populateNewResidentsList() {
+    if (!this.houses) {
+      this.newResidentsListTarget.innerHTML = '<p class="text-gray-500 italic">Loading...</p>';
+      return;
+    }
+
+    // Find houses with new residents (first_seen_at within last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const housesWithNewResidents = this.houses.filter(house => 
+      house.residents.some(resident => {
+        const firstSeenAt = new Date(resident.first_seen_at);
+        return firstSeenAt >= thirtyDaysAgo;
+      })
+    );
+
+    if (housesWithNewResidents.length === 0) {
+      this.newResidentsListTarget.innerHTML = '<p class="text-gray-500 italic">No new residents in the last 30 days</p>';
+      return;
+    }
+
+    // Build the HTML for the list
+    let html = '';
+    housesWithNewResidents.forEach(house => {
+      const newResidents = house.residents.filter(resident => {
+        const firstSeenAt = new Date(resident.first_seen_at);
+        return firstSeenAt >= thirtyDaysAgo;
+      });
+
+      if (newResidents.length > 0) {
+        html += `<div class="mb-3">`;
+        html += `<div class="font-medium text-gray-800 mb-1">${house.street_number} ${house.street_name}</div>`;
+        newResidents.forEach(resident => {
+          const displayName = resident.display_name || resident.official_name || 'Unknown';
+          html += `<div class="ml-2 text-gray-600 mb-1">${displayName}</div>`;
+        });
+        html += `</div>`;
+      }
+    });
+
+    this.newResidentsListTarget.innerHTML = html;
   }
 
   // Toggle search box visibility on mobile
