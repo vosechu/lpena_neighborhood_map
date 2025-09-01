@@ -36,6 +36,13 @@ bundle exec rspec
 bundle exec sidekiq
 ```
 
+## Monitoring
+
+### Check for errors in New Relic
+```bash
+newrelic nrql query -q "SELECT count(*) FROM TransactionError SINCE 30 DAYS AGO"
+```
+
 ## Random zsh commands
 
 Download the neighborhood data from pcpao
