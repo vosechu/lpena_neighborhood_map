@@ -45,6 +45,19 @@ class ResidentMailer < ApplicationMailer
     )
   end
 
+  def house_transition_notification(house, changes)
+    @house = house
+    @changes = changes
+    @pcpao_url = build_pcpao_url(house)
+
+    admin_email = Rails.application.credentials.admin_email || 'chuck@lakepasadenaestates.com'
+    
+    mail(
+      to: admin_email,
+      subject: "House ownership change: #{@house.street_number} #{@house.street_name}"
+    )
+  end
+
   private
 
   def generate_opt_out_token(resident)
@@ -53,5 +66,10 @@ class ResidentMailer < ApplicationMailer
       resident_id: resident.id,
       expires_at: 30.days.from_now
     })
+  end
+
+  def build_pcpao_url(house)
+    # Use the quick search page since direct address params don't work
+    "https://pcpao.gov/quick-search?qu=1"
   end
 end

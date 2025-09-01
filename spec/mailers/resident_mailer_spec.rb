@@ -88,6 +88,56 @@ RSpec.describe ResidentMailer, type: :mailer do
     end
   end
 
+  describe '#house_transition_notification' do
+    let(:house) { create(:house, street_number: '123', street_name: 'Main St') }
+    let(:old_resident) { create(:resident, official_name: 'John Doe', house: house) }
+    let(:new_resident) { create(:resident, official_name: 'Jane Smith', house: house) }
+    let(:changes) do
+      {
+        residents_removed: [old_resident],
+        residents_added: [new_resident]
+      }
+    end
+    let(:mail) { ResidentMailer.house_transition_notification(house, changes) }
+
+    it 'renders the headers' do
+      expect(mail.subject).to eq('House ownership change: 123 Main St')
+      expect(mail.to).to eq(['chuck@lakepasadenaestates.com'])
+      expect(mail.from).to eq(['no-reply@lakepasadenaestates.com'])
+    end
+
+    it 'renders the body' do
+      expect(mail.body.encoded).to include('House Ownership Change Detected')
+      expect(mail.body.encoded).to include('123 Main St')
+    end
+
+    it 'includes previous residents' do
+      expect(mail.body.encoded).to include('Previous Residents')
+      expect(mail.body.encoded).to include('John Doe')
+    end
+
+    it 'includes new residents' do
+      expect(mail.body.encoded).to include('New Residents')
+      expect(mail.body.encoded).to include('Jane Smith')
+    end
+
+    it 'includes PCPAO verification link' do
+      expect(mail.body.encoded).to include('Search PCPAO Property Records')
+      expect(mail.body.encoded).to include('pcpao.gov/quick-search')
+      expect(mail.body.encoded).to include('Search for:</strong> 123 Main St')
+    end
+
+    context 'when admin_email is configured in credentials' do
+      before do
+        allow(Rails.application.credentials).to receive(:admin_email).and_return('admin@example.com')
+      end
+
+      it 'uses the configured admin email' do
+        expect(mail.to).to eq(['admin@example.com'])
+      end
+    end
+  end
+
   describe '#generate_opt_out_token' do
     it 'generates a valid token' do
       mailer = ResidentMailer.new

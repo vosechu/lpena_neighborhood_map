@@ -20,6 +20,11 @@ class UpdateHouseOwnershipService
       create_new_residents if @owner1_name.present?
     end
 
+    # Send house transition notification if there were changes
+    if @changes[:residents_added].any? || @changes[:residents_removed].any?
+      ResidentMailer.house_transition_notification(@house, @changes).deliver_later
+    end
+
     @changes
   end
 

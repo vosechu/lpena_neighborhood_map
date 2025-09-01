@@ -71,6 +71,13 @@ RSpec.describe UpdateHouseOwnershipService do
         expect(service).to have_received(:create_new_residents)
       end
 
+      it 'sends house transition notification when changes occur' do
+        service.instance_variable_set(:@changes, { residents_added: [new_resident1], residents_removed: [old_resident1] })
+        expect(ResidentMailer).to receive(:house_transition_notification).with(house, { residents_added: [new_resident1], residents_removed: [old_resident1] }).and_return(double(deliver_later: true))
+        
+        service.call
+      end
+
       context 'when owner1_name is nil' do
         let(:owner1_name) { nil }
         let(:owner2_name) { nil }
