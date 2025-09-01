@@ -1,5 +1,5 @@
 class ResidentCreationService
-  def self.create_resident(params)
+  def self.create_resident(params, inviter = nil)
     # Convert ActionController::Parameters to hash if needed
     params = params.to_h if params.respond_to?(:to_h)
 
@@ -15,7 +15,7 @@ class ResidentCreationService
     if resident.save
       # Create user if email is provided
       if resident.email.present?
-        create_user_for_resident(resident)
+        create_user_for_resident(resident, inviter)
       end
 
       Rails.logger.info "Resident #{resident.id} created"
@@ -28,7 +28,7 @@ class ResidentCreationService
 
   private
 
-  def self.create_user_for_resident(resident)
+  def self.create_user_for_resident(resident, inviter = nil)
     return if resident.email.blank?
 
     # Check if user already exists with this email
@@ -54,7 +54,7 @@ class ResidentCreationService
       resident.update(user: user)
 
       # Send welcome email with login instructions
-      ResidentMailer.welcome_new_user(resident, user).deliver_later
+      ResidentMailer.welcome_new_user(resident, user, inviter).deliver_later
 
       Rails.logger.info "Created user #{user.id} for resident #{resident.id}"
       user

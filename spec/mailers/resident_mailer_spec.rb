@@ -6,17 +6,28 @@ RSpec.describe ResidentMailer, type: :mailer do
 
   describe '#welcome_new_user' do
     let(:mail) { ResidentMailer.welcome_new_user(resident, user) }
+    let(:inviter) { create(:resident, display_name: 'Jane Smith', house: create(:house, street_number: '123', street_name: 'Main St')) }
+    let(:mail_with_inviter) { ResidentMailer.welcome_new_user(resident, user, inviter) }
 
     it 'renders the headers' do
-      expect(mail.subject).to eq("Welcome to the Neighborhood Directory - Set up your account")
+      expect(mail.subject).to eq("Neighborhood Directory Invite from Chuck (6345 Burlington)")
       expect(mail.to).to eq([ user.email ])
       expect(mail.from).to eq([ 'no-reply@lakepasadenaestates.com' ])
     end
 
     it 'renders the body' do
-      expect(mail.body.encoded).to include('Hi there!')
-      expect(mail.body.encoded).to include('I\'m your neighbor at 63rd and Burlington Ave N')
+      expect(mail.body.encoded).to include('Hi neighbor!')
+      expect(mail.body.encoded).to include('white house with the pergola at 6345 Burlington Ave N')
       expect(mail.body.encoded).to include('Set Up Your Account')
+    end
+
+    it 'includes inviter information when provided' do
+      expect(mail_with_inviter.body.encoded).to include('Your neighbor Jane Smith at 123 Main St thought you might be interested')
+      expect(mail_with_inviter.subject).to eq("Neighborhood Directory Invite from Jane Smith (123 Main St)")
+    end
+
+    it 'does not include inviter information when not provided' do
+      expect(mail.body.encoded).not_to include('Your neighbor')
     end
 
     it 'includes resident information' do

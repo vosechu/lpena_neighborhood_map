@@ -9,16 +9,23 @@ class ResidentMailer < ApplicationMailer
     data_change_notification(resident, changes).deliver_later
   end
 
-  def welcome_new_user(resident, user)
+  def welcome_new_user(resident, user, inviter = nil)
     @resident = resident
     @user = user
+    @inviter = inviter
     @login_token = UserCreationService.generate_initial_login_token(@user)
     @login_url = edit_user_password_url(reset_password_token: @login_token)
     @unsubscribe_url = one_click_unsubscribe_url(token: generate_opt_out_token(@resident))
 
+    subject = if @inviter.present?
+                "Neighborhood Directory Invite from #{@inviter.display_name} (#{@inviter.house.street_number} #{@inviter.house.street_name})"
+    else
+                'Neighborhood Directory Invite from Chuck (6345 Burlington)'
+    end
+
     mail(
       to: @user.email,
-      subject: 'Welcome to the Neighborhood Directory - Set up your account',
+      subject: subject,
       'List-Unsubscribe' => "<#{@unsubscribe_url}>",
       'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click'
     )

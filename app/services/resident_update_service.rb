@@ -1,5 +1,5 @@
 class ResidentUpdateService
-  def self.update_resident(resident, params)
+  def self.update_resident(resident, params, inviter = nil)
     # Convert ActionController::Parameters to hash if needed
     params = params.to_h if params.respond_to?(:to_h)
 
@@ -9,7 +9,7 @@ class ResidentUpdateService
     # Update the resident
     if resident.update(params)
       # Handle email changes
-      handle_email_change(resident, original_email)
+      handle_email_change(resident, original_email, inviter)
 
       # Send notification email if resident has email, data changed, and not hidden
       if should_send_notification?(resident, original_attributes)
@@ -26,7 +26,7 @@ class ResidentUpdateService
 
   private
 
-  def self.handle_email_change(resident, original_email)
+  def self.handle_email_change(resident, original_email, inviter = nil)
     return if resident.email == original_email # No change
 
     if resident.email.blank?
@@ -50,12 +50,12 @@ class ResidentUpdateService
         Rails.logger.info "Linked existing user #{existing_user.id} to resident #{resident.id}"
       else
         # Create new user
-        create_user_for_resident(resident)
+        create_user_for_resident(resident, inviter)
       end
     end
   end
 
-  def self.create_user_for_resident(resident)
+  def self.create_user_for_resident(resident, inviter = nil)
     return if resident.email.blank?
 
     begin
@@ -69,7 +69,7 @@ class ResidentUpdateService
       resident.update(user: user)
 
       # Send welcome email with login instructions
-      ResidentMailer.welcome_new_user(resident, user).deliver_later
+      ResidentMailer.welcome_new_user(resident, user, inviter).deliver_later
 
       Rails.logger.info "Created user #{user.id} for resident #{resident.id}"
       user

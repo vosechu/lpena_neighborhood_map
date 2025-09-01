@@ -1,15 +1,40 @@
-<h1>Hi there!</h1>
+<h1>Hi neighbor!</h1>
 
-<p>I'm your neighbor at 63rd and Burlington Ave N. I made an app for our neighborhood and I'm excited to share it with you!</p>
+<p>This is Chuck from the white house with the pergola at 6345 Burlington Ave N (the one with the wild pollinator garden in front). You might have seen me out gardening or walking our sweet old black lab Mia.</p>
 
-<p>I'm trying to make it easy, so I created an account for you already. All you have to do is click this link and set a password! (I promise I'm not trying to steal your passwords, but just in case, you probably shouldn't reuse any important passwords for some random email from a neighbor)</p>
+<% if @inviter.present? %>
+<p><strong>Your neighbor <%= @inviter.display_name %> at <%= @inviter.house.street_number %> <%= @inviter.house.street_name %> thought you might be interested in our neighborhood directory and asked me to send you an invite.</strong></p>
+<% end %>
+
+<p>I've been working on a neighborhood directory app specifically for our area, and I'd love to invite you to check it out. Think of it as a phone book, but just for people on our streets - a place where we can share contact info, remember the names of our neighbors, and stay connected as neighbors.</p>
+
+<h2>Why am I reaching out?</h2>
+
+<p>I know unsolicited emails feel sketchy, so here's what this actually is: I spent my own time building this because I wanted an easy way for our immediate neighbors to connect. No ads, no data selling, just a simple tool for our community.</p>
+
+<h2>What I'm asking:</h2>
+
+<p>I've created an account for you to make it easy to try out. The link below will let you set a password and take a look around:</p>
 
 <p><%= link_to "Set Up Your Account", @login_url, style: "background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;" %></p>
 
-<p>This is like a wiki for our neighborhood; anyone can enter details for anyone else. If someone changes your details, you'll get an email about it so you can see what was changed and by whom.</p>
+<p>I've added a basic entry for your address, but you control all your own information - edit what you want, keep private what you want, or delete it entirely if this isn't for you.</p>
 
-<p>I hope you enjoy my little app! Love you all!</p>
-<p>Chuck Lauer Vose @ 63rd and Burlington Ave N</p>
+<h2>A few reassurances:</h2>
+
+<ul>
+  <li>Your address came from public property records, not any sketchy list</li>
+  <li>Your email address came from <% if @inviter.present? %><em><%= @inviter.display_name %> at <%= @inviter.house.street_number %> <%= @inviter.house.street_name %></em><% else %><em>public records and neighborhood research</em><% end %></li>
+  <li>This is a free community project, not a business</li>
+  <li>You can contact me directly if you have concerns - my contact is below, but I'm also usually outside early morning on the weekends!</li>
+</ul>
+
+<p>Feel free to knock on my door if you'd rather talk in person, or just ignore this if it's not for you.</p>
+
+<p>Thanks for being a great neighbor,<br>
+Chuck Lauer Vose<br>
+The white house with the pergola at 6345 Burlington Ave N<br>
+<a href="mailto:vosechu@gmail.com">vosechu@gmail.com</a></p>
 
 <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
 

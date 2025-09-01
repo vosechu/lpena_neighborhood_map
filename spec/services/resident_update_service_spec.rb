@@ -174,7 +174,7 @@ RSpec.describe ResidentUpdateService, type: :service do
 
         it 'sends welcome email' do
           expect(ResidentMailer).to receive(:welcome_new_user)
-            .with(kind_of(Resident), kind_of(User))
+            .with(kind_of(Resident), kind_of(User), nil)
             .and_return(double(deliver_later: true))
 
           ResidentUpdateService.update_resident(resident, params)
