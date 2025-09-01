@@ -1,3 +1,5 @@
+require 'set'
+
 class UpdateHouseOwnershipService
   def initialize(house:, owner1_name:, owner2_name: nil)
     @house = house
@@ -15,9 +17,18 @@ class UpdateHouseOwnershipService
   def call
     return @changes unless ownership_changed?
 
+    categorize_name_changes
+
     ActiveRecord::Base.transaction do
-      mark_current_residents_as_moved_out
-      create_new_residents if @owner1_name.present?
+      if @complete_change
+        # Complete ownership change - mark ALL residents as moved out
+        mark_all_residents_as_moved_out
+      else
+        # Partial ownership change - only mark specific official residents
+        mark_specific_residents_as_moved_out(@leaving_names)
+      end
+
+      create_arriving_residents if @arriving_names.any?
     end
 
     # Send house transition notification if there were changes
@@ -40,27 +51,44 @@ class UpdateHouseOwnershipService
     current_owner_names != new_owner_names
   end
 
+  def categorize_name_changes
+    current_names = current_owner_names.to_set
+    new_names = new_owner_names.to_set
+
+    @staying_names = current_names.intersection(new_names)    # names in both lists
+    @leaving_names = current_names.difference(new_names)     # names only in current
+    @arriving_names = new_names.difference(current_names)    # names only in new
+
+    @complete_change = @staying_names.empty? && current_names.any? && new_names.any?
+  end
+
   private
 
-  def mark_current_residents_as_moved_out
-    # AIDEV-NOTE: Up above we only check the residents with official names (from city data).
-    # But if all the official names change, then all the extra residents are probably moving out too.
+  def mark_all_residents_as_moved_out
+    # Complete ownership change - all residents (including housemates) are moving out
     @current_residents.each do |resident|
       resident.update!(moved_out_at: @current_time)
       @changes[:residents_removed] << resident
     end
   end
 
-  def create_new_residents
-    # Create first owner if present and not empty
-    if @owner1_name.present? && @owner1_name.strip.present?
-      resident = create_resident(@owner1_name)
-      @changes[:residents_added] << resident
+  def mark_specific_residents_as_moved_out(leaving_names)
+    # Partial ownership change - only mark residents with specific official names as moved out
+    # Keep residents without official names (housemates) and those whose names are staying
+    residents_to_remove = @current_owners.select do |resident|
+      normalized_name = resident.official_name&.strip&.upcase
+      leaving_names.include?(normalized_name)
     end
 
-    # Create second owner if present and not empty
-    if @owner2_name.present? && @owner2_name.strip.present?
-      resident = create_resident(@owner2_name)
+    residents_to_remove.each do |resident|
+      resident.update!(moved_out_at: @current_time)
+      @changes[:residents_removed] << resident
+    end
+  end
+
+  def create_arriving_residents
+    @arriving_names.each do |name|
+      resident = create_resident(name)
       @changes[:residents_added] << resident
     end
   end

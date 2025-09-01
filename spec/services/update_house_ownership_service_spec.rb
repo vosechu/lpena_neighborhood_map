@@ -48,45 +48,75 @@ RSpec.describe UpdateHouseOwnershipService do
           instance_double(Resident, official_name: 'OLD, OWNER'),
           instance_double(Resident, official_name: 'ANOTHER, OWNER')
         ])
-        service.instance_variable_set(:@owner1_name, 'NEW, OWNER')
-        service.instance_variable_set(:@owner2_name, 'SECOND, OWNER')
-        allow(service).to receive(:mark_current_residents_as_moved_out)
-        allow(service).to receive(:create_new_residents)
         allow(ActiveRecord::Base).to receive(:transaction).and_yield
       end
 
-      it 'performs transaction and returns changes' do
-        result = service.call
-        expect(ActiveRecord::Base).to have_received(:transaction)
-        expect(result).to eq({ residents_added: [], residents_removed: [] })
+      context 'complete ownership change (no names in common)' do
+        before do
+          allow(service).to receive(:mark_all_residents_as_moved_out)
+          allow(service).to receive(:create_arriving_residents)
+        end
+
+        it 'performs transaction and categorizes changes' do
+          result = service.call
+          expect(ActiveRecord::Base).to have_received(:transaction)
+          expect(result).to eq({ residents_added: [], residents_removed: [] })
+        end
+
+        it 'calls mark_all_residents_as_moved_out for complete change' do
+          service.call
+          expect(service).to have_received(:mark_all_residents_as_moved_out)
+        end
+
+        it 'calls create_arriving_residents when arriving names present' do
+          service.call
+          expect(service).to have_received(:create_arriving_residents)
+        end
       end
 
-      it 'calls mark_current_residents_as_moved_out' do
-        service.call
-        expect(service).to have_received(:mark_current_residents_as_moved_out)
-      end
+      context 'partial ownership change (some names in common)' do
+        let(:owner1_name) { 'OLD, OWNER' }  # Keeping one existing owner
+        let(:owner2_name) { 'NEW, OWNER' }  # Adding one new owner
 
-      it 'calls create_new_residents when owner1_name is present' do
-        service.call
-        expect(service).to have_received(:create_new_residents)
+        before do
+          allow(service).to receive(:mark_specific_residents_as_moved_out)
+          allow(service).to receive(:create_arriving_residents)
+        end
+
+        it 'calls mark_specific_residents_as_moved_out for partial change' do
+          service.call
+          expect(service).to have_received(:mark_specific_residents_as_moved_out)
+        end
       end
 
       it 'sends house transition notification when changes occur' do
-        service.instance_variable_set(:@changes, { residents_added: [new_resident1], residents_removed: [old_resident1] })
-        expect(ResidentMailer).to receive(:house_transition_notification).with(house, { residents_added: [new_resident1], residents_removed: [old_resident1] }).and_return(double(deliver_later: true))
-        
+        # Mock the methods that will be called
+        allow(service).to receive(:mark_all_residents_as_moved_out)
+        allow(service).to receive(:create_arriving_residents)
+
+        # Set up the changes that would be made
+        service.instance_variable_set(:@changes, { residents_added: [ new_resident1 ], residents_removed: [ old_resident1 ] })
+        expect(ResidentMailer).to receive(:house_transition_notification).with(house, { residents_added: [ new_resident1 ], residents_removed: [ old_resident1 ] }).and_return(double(deliver_later: true))
+
         service.call
       end
 
-      context 'when owner1_name is nil' do
+      context 'when no new owners specified' do
         let(:owner1_name) { nil }
         let(:owner2_name) { nil }
 
-        it 'does not call create_new_residents' do
-          service.instance_variable_set(:@owner1_name, nil)
-          service.instance_variable_set(:@owner2_name, nil)
+        it 'does not call create_arriving_residents' do
+          # Mock all the methods that would be called
+          allow(service).to receive(:mark_all_residents_as_moved_out)
+          allow(service).to receive(:mark_specific_residents_as_moved_out)
+          allow(service).to receive(:create_arriving_residents)
+
+          # Mock the residents so update! doesn't fail
+          current_owners = service.instance_variable_get(:@current_owners)
+          current_owners.each { |resident| allow(resident).to receive(:update!) }
+
           service.call
-          expect(service).not_to have_received(:create_new_residents)
+          expect(service).not_to have_received(:create_arriving_residents)
         end
       end
     end
@@ -165,6 +195,91 @@ RSpec.describe UpdateHouseOwnershipService do
       it 'filters out empty string owners' do
         result = service.new_owner_names
         expect(result).to eq([ 'DOE, JANE' ])
+      end
+    end
+  end
+
+  describe '#categorize_name_changes' do
+    let(:owner1_name) { 'SMITH, JOHN' }
+    let(:owner2_name) { 'DOE, JANE' }
+
+    context 'complete ownership change (no overlap)' do
+      before do
+        service.instance_variable_set(:@current_owners, [
+          instance_double(Resident, official_name: 'OLD, OWNER'),
+          instance_double(Resident, official_name: 'PREVIOUS, OWNER')
+        ])
+      end
+
+      it 'correctly categorizes complete change' do
+        service.categorize_name_changes
+
+        expect(service.instance_variable_get(:@staying_names).to_a).to eq([])
+        expect(service.instance_variable_get(:@leaving_names).to_a.sort).to eq([ 'OLD, OWNER', 'PREVIOUS, OWNER' ])
+        expect(service.instance_variable_get(:@arriving_names).to_a.sort).to eq([ 'DOE, JANE', 'SMITH, JOHN' ])
+        expect(service.instance_variable_get(:@complete_change)).to be true
+      end
+    end
+
+    context 'partial ownership change (some overlap)' do
+      let(:owner1_name) { 'OLD, OWNER' }    # Keeping this one
+      let(:owner2_name) { 'NEW, OWNER' }    # Adding this one
+
+      before do
+        service.instance_variable_set(:@current_owners, [
+          instance_double(Resident, official_name: 'OLD, OWNER'),
+          instance_double(Resident, official_name: 'PREVIOUS, OWNER')
+        ])
+      end
+
+      it 'correctly categorizes partial change' do
+        service.categorize_name_changes
+
+        expect(service.instance_variable_get(:@staying_names).to_a).to eq([ 'OLD, OWNER' ])
+        expect(service.instance_variable_get(:@leaving_names).to_a).to eq([ 'PREVIOUS, OWNER' ])
+        expect(service.instance_variable_get(:@arriving_names).to_a).to eq([ 'NEW, OWNER' ])
+        expect(service.instance_variable_get(:@complete_change)).to be false
+      end
+    end
+
+    context 'addition only (no one leaves)' do
+      let(:owner1_name) { 'OLD, OWNER' }
+      let(:owner2_name) { 'PREVIOUS, OWNER' }
+
+      before do
+        service.instance_variable_set(:@current_owners, [
+          instance_double(Resident, official_name: 'OLD, OWNER')
+        ])
+      end
+
+      it 'correctly categorizes addition' do
+        service.categorize_name_changes
+
+        expect(service.instance_variable_get(:@staying_names).to_a).to eq([ 'OLD, OWNER' ])
+        expect(service.instance_variable_get(:@leaving_names).to_a).to eq([])
+        expect(service.instance_variable_get(:@arriving_names).to_a).to eq([ 'PREVIOUS, OWNER' ])
+        expect(service.instance_variable_get(:@complete_change)).to be false
+      end
+    end
+
+    context 'removal only (no one arrives)' do
+      let(:owner1_name) { 'OLD, OWNER' }
+      let(:owner2_name) { nil }
+
+      before do
+        service.instance_variable_set(:@current_owners, [
+          instance_double(Resident, official_name: 'OLD, OWNER'),
+          instance_double(Resident, official_name: 'PREVIOUS, OWNER')
+        ])
+      end
+
+      it 'correctly categorizes removal' do
+        service.categorize_name_changes
+
+        expect(service.instance_variable_get(:@staying_names).to_a).to eq([ 'OLD, OWNER' ])
+        expect(service.instance_variable_get(:@leaving_names).to_a).to eq([ 'PREVIOUS, OWNER' ])
+        expect(service.instance_variable_get(:@arriving_names).to_a).to eq([])
+        expect(service.instance_variable_get(:@complete_change)).to be false
       end
     end
   end
@@ -318,7 +433,7 @@ RSpec.describe UpdateHouseOwnershipService do
     end
   end
 
-  describe '#mark_current_residents_as_moved_out' do
+  describe '#mark_all_residents_as_moved_out' do
     let(:owner1_name) { 'NEW, OWNER' }
     let(:resident1) { instance_double(Resident, id: 1, house_id: house.id) }
     let(:resident2) { instance_double(Resident, id: 2, house_id: house.id) }
@@ -334,104 +449,88 @@ RSpec.describe UpdateHouseOwnershipService do
     let(:service) { described_class.new(house: house, owner1_name: owner1_name, owner2_name: owner2_name) }
 
     it 'marks all current residents as moved out' do
-      service.send(:mark_current_residents_as_moved_out)
+      service.send(:mark_all_residents_as_moved_out)
       expect(resident1).to have_received(:update!).with(moved_out_at: current_time)
       expect(resident2).to have_received(:update!).with(moved_out_at: current_time)
     end
 
     it 'adds residents to changes hash' do
-      service.send(:mark_current_residents_as_moved_out)
+      service.send(:mark_all_residents_as_moved_out)
       expect(service.instance_variable_get(:@changes)[:residents_removed]).to eq([ resident1, resident2 ])
     end
   end
 
-  describe '#create_new_residents' do
+  describe '#create_arriving_residents' do
     let(:owner1_name) { 'SMITH, JOHN' }
     let(:owner2_name) { 'DOE, JANE' }
     let(:resident1) { instance_double(Resident, id: 1, official_name: 'SMITH, JOHN') }
     let(:resident2) { instance_double(Resident, id: 2, official_name: 'DOE, JANE') }
 
     before do
+      # Set up arriving names (which would be set by categorize_name_changes)
+      service.instance_variable_set(:@arriving_names, [ 'SMITH, JOHN', 'DOE, JANE' ])
       allow(service).to receive(:create_resident).with('SMITH, JOHN').and_return(resident1)
       allow(service).to receive(:create_resident).with('DOE, JANE').and_return(resident2)
     end
 
-    it 'creates residents for both owners' do
-      service.send(:create_new_residents)
+    it 'creates residents for all arriving names' do
+      service.send(:create_arriving_residents)
       expect(service).to have_received(:create_resident).with('SMITH, JOHN')
       expect(service).to have_received(:create_resident).with('DOE, JANE')
     end
 
     it 'adds residents to changes hash' do
-      service.send(:create_new_residents)
+      service.send(:create_arriving_residents)
       expect(service.instance_variable_get(:@changes)[:residents_added]).to eq([ resident1, resident2 ])
     end
 
-    context 'when owner1_name is empty' do
-      let(:owner1_name) { '   ' }
-
-      it 'does not create resident for empty owner1_name' do
-        service.send(:create_new_residents)
-        expect(service).not_to have_received(:create_resident).with('   ')
+    context 'when no arriving names' do
+      before do
+        service.instance_variable_set(:@arriving_names, [])
       end
-    end
 
-    context 'when owner2_name is nil' do
-      let(:owner2_name) { nil }
-
-      it 'only creates resident for owner1_name' do
-        service.send(:create_new_residents)
-        expect(service).to have_received(:create_resident).with('SMITH, JOHN')
-        expect(service).not_to have_received(:create_resident).with(nil)
+      it 'creates no residents' do
+        service.send(:create_arriving_residents)
+        expect(service).not_to have_received(:create_resident)
       end
     end
 
     context 'with real data patterns' do
       context 'with business entities' do
-        let(:owner1_name) { 'SMITH FAMILY TRUST' }
-        let(:owner2_name) { 'ABC LLC' }
-        let(:resident1) { instance_double(Resident, id: 1, official_name: 'SMITH FAMILY TRUST') }
-        let(:resident2) { instance_double(Resident, id: 2, official_name: 'ABC LLC') }
-
         before do
-          allow(service).to receive(:create_resident).with('SMITH FAMILY TRUST').and_return(resident1)
-          allow(service).to receive(:create_resident).with('ABC LLC').and_return(resident2)
+          service.instance_variable_set(:@arriving_names, [ 'SMITH FAMILY TRUST', 'ABC LLC' ])
+          allow(service).to receive(:create_resident).with('SMITH FAMILY TRUST').and_return(instance_double(Resident))
+          allow(service).to receive(:create_resident).with('ABC LLC').and_return(instance_double(Resident))
         end
 
         it 'creates residents for business entities' do
-          service.send(:create_new_residents)
+          service.send(:create_arriving_residents)
           expect(service).to have_received(:create_resident).with('SMITH FAMILY TRUST')
           expect(service).to have_received(:create_resident).with('ABC LLC')
         end
       end
 
       context 'with government entities' do
-        let(:owner1_name) { 'CITY OF ST PETERSBURG' }
-        let(:resident1) { instance_double(Resident, id: 1, official_name: 'CITY OF ST PETERSBURG') }
-
         before do
-          allow(service).to receive(:create_resident).with('CITY OF ST PETERSBURG').and_return(resident1)
+          service.instance_variable_set(:@arriving_names, [ 'CITY OF ST PETERSBURG' ])
+          allow(service).to receive(:create_resident).with('CITY OF ST PETERSBURG').and_return(instance_double(Resident))
         end
 
         it 'creates residents for government entities' do
-          service.send(:create_new_residents)
+          service.send(:create_arriving_residents)
           expect(service).to have_received(:create_resident).with('CITY OF ST PETERSBURG')
         end
       end
 
       context 'with special characters' do
-        let(:owner1_name) { 'SMITH, JOHN JR.' }
-        let(:owner2_name) { 'DOE & JANE' }
-        let(:resident1) { instance_double(Resident, id: 1, official_name: 'SMITH, JOHN JR.') }
-        let(:resident2) { instance_double(Resident, id: 2, official_name: 'DOE & JANE') }
-
         before do
-          allow(service).to receive(:create_resident).with('SMITH, JOHN JR.').and_return(resident1)
-          allow(service).to receive(:create_resident).with('DOE & JANE').and_return(resident2)
+          service.instance_variable_set(:@arriving_names, [ 'SMITH, JOHN JR.', 'DOE & JANE' ])
+          allow(service).to receive(:create_resident).with('SMITH, JOHN JR.').and_return(instance_double(Resident))
+          allow(service).to receive(:create_resident).with('DOE & JANE').and_return(instance_double(Resident))
         end
 
         it 'creates residents with special characters' do
-          service.send(:create_new_residents)
+          service.send(:create_arriving_residents)
           expect(service).to have_received(:create_resident).with('SMITH, JOHN JR.')
           expect(service).to have_received(:create_resident).with('DOE & JANE')
         end
