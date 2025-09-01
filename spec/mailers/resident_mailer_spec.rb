@@ -94,16 +94,16 @@ RSpec.describe ResidentMailer, type: :mailer do
     let(:new_resident) { create(:resident, official_name: 'Jane Smith', house: house) }
     let(:changes) do
       {
-        residents_removed: [old_resident],
-        residents_added: [new_resident]
+        residents_removed: [ old_resident ],
+        residents_added: [ new_resident ]
       }
     end
     let(:mail) { ResidentMailer.house_transition_notification(house, changes) }
 
     it 'renders the headers' do
       expect(mail.subject).to eq('House ownership change: 123 Main St')
-      expect(mail.to).to eq(['chuck@lakepasadenaestates.com'])
-      expect(mail.from).to eq(['no-reply@lakepasadenaestates.com'])
+      expect(mail.to).to eq([ 'chuck@lakepasadenaestates.com' ])
+      expect(mail.from).to eq([ 'no-reply@lakepasadenaestates.com' ])
     end
 
     it 'renders the body' do
@@ -133,7 +133,7 @@ RSpec.describe ResidentMailer, type: :mailer do
       end
 
       it 'uses the configured admin email' do
-        expect(mail.to).to eq(['admin@example.com'])
+        expect(mail.to).to eq([ 'admin@example.com' ])
       end
     end
   end

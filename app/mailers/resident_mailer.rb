@@ -70,6 +70,6 @@ class ResidentMailer < ApplicationMailer
 
   def build_pcpao_url(house)
     # Use the quick search page since direct address params don't work
-    "https://pcpao.gov/quick-search?qu=1"
+    'https://pcpao.gov/quick-search?qu=1'
   end
 end
