@@ -159,3 +159,10 @@ Production Environment Setup and Maintenance:
       - Test: Verify that indicators are properly displayed and managed in the UI
       - Test: Ensure indicators are preserved during data imports
       - Test: Validate that indicators are included in exports
+
+User Email Management:
+  - Implement UI/logic for users to change their login email (User.email) separate from display email (Resident.email) @status(pending) @priority(medium)
+    - Both fields exist intentionally for privacy/flexibility reasons
+    - Users should be able to update their login credentials when needed
+    - Consider security implications (email verification, etc.)
+    - Design UI that clearly distinguishes between login email vs display email
