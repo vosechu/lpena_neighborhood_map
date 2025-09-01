@@ -50,8 +50,8 @@ class ResidentMailer < ApplicationMailer
     @changes = changes
     @pcpao_url = build_pcpao_url(house)
 
-    admin_email = Rails.application.credentials.admin_email || 'chuck@lakepasadenaestates.com'
-    
+    admin_email = Rails.application.credentials.admin_email || 'vosechu@gmail.com'
+
     mail(
       to: admin_email,
       subject: "House ownership change: #{@house.street_number} #{@house.street_name}"

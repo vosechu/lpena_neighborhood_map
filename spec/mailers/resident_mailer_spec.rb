@@ -102,7 +102,7 @@ RSpec.describe ResidentMailer, type: :mailer do
 
     it 'renders the headers' do
       expect(mail.subject).to eq('House ownership change: 123 Main St')
-      expect(mail.to).to eq([ 'chuck@lakepasadenaestates.com' ])
+      expect(mail.to).to eq([ 'vosechu@gmail.com' ])
       expect(mail.from).to eq([ 'no-reply@lakepasadenaestates.com' ])
     end
 
