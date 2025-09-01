@@ -25,6 +25,9 @@ gem 'httparty'
 gem 'sidekiq'
 gem 'sidekiq-scheduler'
 
+# Email delivery via Mailgun HTTP API
+gem 'mailgun-ruby'
+
 # Authentication and authorization
 gem 'devise'
 gem 'cancancan'

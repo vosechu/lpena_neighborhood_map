@@ -62,15 +62,11 @@ Rails.application.configure do
     protocol: ENV.fetch('RAILS_PROTOCOL', 'https')
   }
 
-  config.action_mailer.delivery_method = :smtp
-  config.action_mailer.smtp_settings = {
-    address: 'smtp.mailgun.org',
-    port: 587,
+  config.action_mailer.delivery_method = :mailgun
+  config.action_mailer.mailgun_settings = {
+    api_key: ENV['MAILGUN_API_KEY'],
     domain: 'lakepasadenaestates.com',
-    user_name: 'no-reply@lakepasadenaestates.com',
-    password: ENV['MAILGUN_SMTP_PASSWORD'],
-    authentication: :plain,
-    enable_starttls_auto: true
+    api_host: 'api.mailgun.net'
   }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
