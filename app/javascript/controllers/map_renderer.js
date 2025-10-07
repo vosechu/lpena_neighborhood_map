@@ -42,9 +42,14 @@ export class MapRenderer {
     const geometry = house.boundary_geometry;
     if (!geometry?.rings?.[0]) return;
 
+    // Check if any resident in the house has an email
+    const hasResidentWithEmail = house.residents && house.residents.some(resident => 
+      resident.email && resident.email.trim() !== ''
+    );
+
     const latlngs = geometry.rings[0].map(this.fromWebMercator);
     const polygon = L.polygon(latlngs, {
-      color: "#3388ff",
+      color: hasResidentWithEmail ? "#22c55e" : "#3388ff", // green if has email, blue otherwise
       weight: 1,
       fillOpacity: 0.3
     }).addTo(this.map);
@@ -175,7 +180,13 @@ export class MapRenderer {
 
       if (house.polygon) {
         if (isMatch) {
-          house.polygon.setStyle({ color: '#3388ff', fillOpacity: 0.5, weight: 2 });
+          // Check if any resident in the house has an email
+          const hasResidentWithEmail = residents.some(resident => 
+            resident.email && resident.email.trim() !== ''
+          );
+          const highlightColor = hasResidentWithEmail ? '#22c55e' : '#3388ff'; // green if has email, blue otherwise
+          
+          house.polygon.setStyle({ color: highlightColor, fillOpacity: 0.5, weight: 2 });
           if (!this.map.hasLayer(house.polygon)) {
             house.polygon.addTo(this.map);
           }
