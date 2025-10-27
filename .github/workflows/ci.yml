@@ -116,7 +116,7 @@ jobs:
           find . -name "*.png" -type f || echo "No PNG files found"
 
       - name: Upload Screenshot Artifact (if failure)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: screenshots
